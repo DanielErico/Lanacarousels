@@ -1,0 +1,111 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* Custom Design System Tokens for Swiss Modernism 2.0 & Custom Template Engines */
+@layer base {
+  body {
+    background-color: #F8FAFC;
+    color: #0F172A;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+}
+
+/* Custom Typography & Font Display */
+.font-headline {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  letter-spacing: -0.03em;
+}
+
+.font-display {
+  font-family: 'Inter', sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.font-condensed {
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+}
+
+/* Swiss Modernism 2.0 Light Navy Glass Cards */
+.navy-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.navy-card-hover:hover {
+  border-color: #CBD5E1;
+  box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.04);
+  transform: translateY(-2px);
+}
+
+/* Inputs & Form Elements */
+.navy-input {
+  background: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  color: #0F172A;
+  transition: all 0.2s ease;
+}
+
+.navy-input:focus {
+  outline: none;
+  border-color: #0EA5E9;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+  background: #FFFFFF;
+}
+
+/* Instagram Carousel 4:5 Aspect Ratio */
+.carousel-aspect-ratio {
+  aspect-ratio: 4 / 5;
+}
+
+/* Neo-Brutalist 3D Offset Card */
+.neo-offset-card {
+  background-color: #FFFFFF;
+  border: 3px solid #000000;
+  box-shadow: 6px 6px 0px #000000;
+  border-radius: 1.25rem;
+}
+
+/* Glassmorphic 3D Card */
+.glass-bento-card {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* Cyber Neon Glow */
+.cyber-glow-border {
+  border: 2px solid #06B6D4;
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.4), inset 0 0 15px rgba(6, 182, 212, 0.2);
+}
+
+/* Neon Gradient Glow */
+.neon-gradient-card {
+  background: linear-gradient(135deg, #C084FC 0%, #38BDF8 100%);
+  box-shadow: 0 0 25px rgba(192, 132, 252, 0.35);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
