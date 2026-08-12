@@ -171,11 +171,19 @@ export async function fetchLinkedInstagramAccountInfo(accessToken: string): Prom
       };
     }
 
-    // Attempt 3: Direct IG user node lookup if standalone token
-    if (res2.ok && data2.username) {
+    // Attempt 3: Fallback to Facebook Page node if page linked
+    if (data1?.data?.[0]?.id) {
+      return {
+        accountId: data1.data[0].id,
+        username: data1.data[0].name || 'Instagram Business Account',
+      };
+    }
+
+    // Attempt 4: Direct IG user node lookup if standalone token
+    if (res2.ok && data2?.id) {
       return {
         accountId: data2.id,
-        username: data2.username,
+        username: data2.username || data2.name,
       };
     }
 
