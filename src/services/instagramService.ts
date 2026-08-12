@@ -122,30 +122,32 @@ export async function fetchLinkedInstagramAccountInfo(accessToken: string): Prom
   error?: string;
 }> {
   try {
-    // Attempt 1: Fetch via Facebook Pages accounts list
+    // Attempt 1: Fetch via Facebook Pages accounts list (both instagram_business_account and connected_instagram_account)
     const res1 = await fetch(
-      `https://graph.facebook.com/v19.0/me/accounts?fields=access_token,name,instagram_business_account{id,name,username}&access_token=${accessToken}`
+      `https://graph.facebook.com/v19.0/me/accounts?fields=access_token,name,instagram_business_account{id,name,username},connected_instagram_account{id,name,username}&access_token=${accessToken}`
     );
     const data1 = await res1.json();
 
     if (res1.ok && data1.data) {
       for (const page of data1.data) {
-        if (page.instagram_business_account) {
+        const igAcc = page.instagram_business_account || page.connected_instagram_account;
+        if (igAcc) {
           return {
-            accountId: page.instagram_business_account.id,
-            username: page.instagram_business_account.username || page.instagram_business_account.name,
+            accountId: igAcc.id,
+            username: igAcc.username || igAcc.name,
           };
         }
         if (page.access_token && page.id) {
           try {
             const pageIgRes = await fetch(
-              `https://graph.facebook.com/v19.0/${page.id}?fields=instagram_business_account{id,name,username}&access_token=${page.access_token}`
+              `https://graph.facebook.com/v19.0/${page.id}?fields=instagram_business_account{id,name,username},connected_instagram_account{id,name,username}&access_token=${page.access_token}`
             );
             const pageIgData = await pageIgRes.json();
-            if (pageIgData.instagram_business_account) {
+            const subIg = pageIgData.instagram_business_account || pageIgData.connected_instagram_account;
+            if (subIg) {
               return {
-                accountId: pageIgData.instagram_business_account.id,
-                username: pageIgData.instagram_business_account.username || pageIgData.instagram_business_account.name,
+                accountId: subIg.id,
+                username: subIg.username || subIg.name,
               };
             }
           } catch {
@@ -157,14 +159,15 @@ export async function fetchLinkedInstagramAccountInfo(accessToken: string): Prom
 
     // Attempt 2: Direct query on /me endpoint
     const res2 = await fetch(
-      `https://graph.facebook.com/v19.0/me?fields=id,name,username,instagram_business_account{id,name,username}&access_token=${accessToken}`
+      `https://graph.facebook.com/v19.0/me?fields=id,name,username,instagram_business_account{id,name,username},connected_instagram_account{id,name,username}&access_token=${accessToken}`
     );
     const data2 = await res2.json();
 
-    if (res2.ok && data2.instagram_business_account) {
+    const directIg = data2?.instagram_business_account || data2?.connected_instagram_account;
+    if (res2.ok && directIg) {
       return {
-        accountId: data2.instagram_business_account.id,
-        username: data2.instagram_business_account.username || data2.instagram_business_account.name,
+        accountId: directIg.id,
+        username: directIg.username || directIg.name,
       };
     }
 
