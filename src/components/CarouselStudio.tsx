@@ -160,8 +160,8 @@ export const CarouselStudio: React.FC<CarouselStudioProps> = ({
   const handlePostNow = async () => {
     const creds = getStoredInstagramCredentials();
 
-    if (!creds.accessToken || !creds.accountId) {
-      setPublishErrorMessage('Your Instagram account is not connected yet. Click "Connect Instagram Account" below to link your Instagram Business account in 1 click!');
+    if (!creds.accessToken) {
+      setPublishErrorMessage('Your Instagram account is not connected yet. Click "1-Click Connect Instagram Account" below to authorize!');
       return;
     }
 

@@ -124,7 +124,7 @@ export async function fetchLinkedInstagramAccountInfo(accessToken: string): Prom
   try {
     // Attempt 1: Fetch via Facebook Pages accounts list
     const res1 = await fetch(
-      `https://graph.facebook.com/v19.0/me/accounts?fields=name,instagram_business_account{id,name,username}&access_token=${accessToken}`
+      `https://graph.facebook.com/v19.0/me/accounts?fields=access_token,name,instagram_business_account{id,name,username}&access_token=${accessToken}`
     );
     const data1 = await res1.json();
 
@@ -135,6 +135,22 @@ export async function fetchLinkedInstagramAccountInfo(accessToken: string): Prom
             accountId: page.instagram_business_account.id,
             username: page.instagram_business_account.username || page.instagram_business_account.name,
           };
+        }
+        if (page.access_token && page.id) {
+          try {
+            const pageIgRes = await fetch(
+              `https://graph.facebook.com/v19.0/${page.id}?fields=instagram_business_account{id,name,username}&access_token=${page.access_token}`
+            );
+            const pageIgData = await pageIgRes.json();
+            if (pageIgData.instagram_business_account) {
+              return {
+                accountId: pageIgData.instagram_business_account.id,
+                username: pageIgData.instagram_business_account.username || pageIgData.instagram_business_account.name,
+              };
+            }
+          } catch {
+            // continue loop
+          }
         }
       }
     }
