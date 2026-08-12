@@ -122,23 +122,42 @@ export async function fetchLinkedInstagramAccountInfo(accessToken: string): Prom
   error?: string;
 }> {
   try {
-    const res = await fetch(
+    // Attempt 1: Fetch via Facebook Pages accounts list
+    const res1 = await fetch(
       `https://graph.facebook.com/v19.0/me/accounts?fields=name,instagram_business_account{id,name,username}&access_token=${accessToken}`
     );
-    const data = await res.json();
+    const data1 = await res1.json();
 
-    if (!res.ok || data.error) {
-      return { error: data.error?.message || `Meta Graph API error ${res.status}` };
+    if (res1.ok && data1.data) {
+      for (const page of data1.data) {
+        if (page.instagram_business_account) {
+          return {
+            accountId: page.instagram_business_account.id,
+            username: page.instagram_business_account.username || page.instagram_business_account.name,
+          };
+        }
+      }
     }
 
-    const pages = data.data || [];
-    for (const page of pages) {
-      if (page.instagram_business_account) {
-        return {
-          accountId: page.instagram_business_account.id,
-          username: page.instagram_business_account.username || page.instagram_business_account.name,
-        };
-      }
+    // Attempt 2: Direct query on /me endpoint
+    const res2 = await fetch(
+      `https://graph.facebook.com/v19.0/me?fields=id,name,username,instagram_business_account{id,name,username}&access_token=${accessToken}`
+    );
+    const data2 = await res2.json();
+
+    if (res2.ok && data2.instagram_business_account) {
+      return {
+        accountId: data2.instagram_business_account.id,
+        username: data2.instagram_business_account.username || data2.instagram_business_account.name,
+      };
+    }
+
+    // Attempt 3: Direct IG user node lookup if standalone token
+    if (res2.ok && data2.username) {
+      return {
+        accountId: data2.id,
+        username: data2.username,
+      };
     }
 
     return { error: 'No Instagram Business Account linked to your Facebook Page was found.' };

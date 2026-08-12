@@ -44,7 +44,21 @@ export const App: React.FC = () => {
       setBrands(fetchedBrands);
 
       if (fetchedBrands.length > 0) {
-        const primary = fetchedBrands.find(b => b.isPrimary) || fetchedBrands[0];
+        let primary = fetchedBrands.find(b => b.isPrimary) || fetchedBrands[0];
+
+        // Check if user just completed 1-Click Meta Instagram OAuth login redirect
+        const oauthRes = await parseInstagramOAuthCallback();
+        if (oauthRes.success) {
+          primary = {
+            ...primary,
+            igConnected: true,
+            igHandle: oauthRes.username ? `@${oauthRes.username.replace('@', '')}` : (primary.igHandle || '@connected'),
+            igAccountName: oauthRes.username || primary.igAccountName,
+          };
+          await saveBrandToSupabase(user.id, primary);
+          setBrands(prev => prev.map(b => b.id === primary.id ? primary : b));
+        }
+
         setActiveBrand(primary);
 
         const fetchedCarousels = await fetchUserCarousels(user.id, primary.id);
@@ -63,21 +77,6 @@ export const App: React.FC = () => {
   useEffect(() => {
     if (user) {
       loadUserData();
-
-      // Check if user just completed 1-Click Meta Instagram OAuth login redirect
-      parseInstagramOAuthCallback().then(async (oauthRes) => {
-        if (oauthRes.success && activeBrand) {
-          const updatedBrand: Brand = {
-            ...activeBrand,
-            igConnected: true,
-            igHandle: oauthRes.username ? `@${oauthRes.username}` : activeBrand.igHandle,
-            igAccountName: oauthRes.username || activeBrand.igAccountName,
-          };
-          setActiveBrand(updatedBrand);
-          setBrands(prev => prev.map(b => b.id === updatedBrand.id ? updatedBrand : b));
-          await saveBrandToSupabase(user.id, updatedBrand);
-        }
-      });
     }
   }, [user]);
 
