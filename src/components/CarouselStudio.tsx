@@ -49,7 +49,7 @@ import {
   NEMOTRON_MODELS,
 } from '../services/aiService';
 import { exportSlidePng, exportCarouselZip } from '../services/exportService';
-import { publishCarouselToInstagram, schedulePostWithQStash } from '../services/instagramService';
+import { publishCarouselToInstagram, schedulePostWithQStash, getStoredInstagramCredentials, initiateInstagramOAuthLogin } from '../services/instagramService';
 
 interface CarouselStudioProps {
   carousel?: Carousel;
@@ -158,6 +158,13 @@ export const CarouselStudio: React.FC<CarouselStudioProps> = ({
   const [isScheduling, setIsScheduling] = useState(false);
 
   const handlePostNow = async () => {
+    const creds = getStoredInstagramCredentials();
+
+    if (!creds.accessToken || !creds.accountId) {
+      setPublishErrorMessage('Your Instagram account is not connected yet. Click "Connect Instagram Account" below to link your Instagram Business account in 1 click!');
+      return;
+    }
+
     setIsPublishingNow(true);
     setPublishErrorMessage('');
     setPublishSuccessMessage(null);
@@ -1079,13 +1086,24 @@ export const CarouselStudio: React.FC<CarouselStudioProps> = ({
 
       {/* Live Post Error Banner */}
       {publishErrorMessage && (
-        <div className="fixed bottom-6 right-6 z-50 max-w-md p-4 rounded-2xl bg-rose-900 text-white shadow-2xl flex items-start gap-3 border border-rose-700 animate-in slide-in-from-bottom-5">
-          <AlertCircle className="w-5 h-5 text-rose-300 shrink-0 mt-0.5" />
-          <div className="flex-1 text-xs">
-            <p className="font-bold text-rose-200">Instagram Publishing Notice</p>
-            <p className="text-rose-100 mt-0.5">{publishErrorMessage}</p>
+        <div className="fixed bottom-6 right-6 z-50 max-w-md p-4 rounded-2xl bg-slate-900 text-white shadow-2xl space-y-3 border border-slate-700 animate-in slide-in-from-bottom-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-2.5">
+              <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold text-xs text-white">Instagram Connection Notice</p>
+                <p className="text-slate-300 text-xs mt-0.5 leading-relaxed">{publishErrorMessage}</p>
+              </div>
+            </div>
+            <button onClick={() => setPublishErrorMessage('')} className="text-slate-400 hover:text-white font-bold text-sm">✕</button>
           </div>
-          <button onClick={() => setPublishErrorMessage('')} className="text-rose-400 hover:text-white font-bold text-sm">✕</button>
+          <button
+            onClick={() => initiateInstagramOAuthLogin()}
+            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md hover:opacity-95"
+          >
+            <Instagram className="w-4 h-4 text-white" />
+            <span>1-Click Connect Instagram Account</span>
+          </button>
         </div>
       )}
 
