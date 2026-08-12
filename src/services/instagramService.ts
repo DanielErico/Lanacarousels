@@ -234,13 +234,29 @@ export async function publishCarouselToInstagram(
   accountId?: string
 ): Promise<{ success: boolean; postUrl?: string; id?: string; error?: string }> {
   const creds = getStoredInstagramCredentials();
-  const token = accessToken || creds.accessToken;
-  const id = accountId || creds.accountId;
+  let token = accessToken || creds.accessToken;
+  let id = accountId || creds.accountId;
 
-  if (!token || !id) {
+  // Auto-detect Account ID if token is available but accountId is missing
+  if (token && !id) {
+    const autoInfo = await fetchLinkedInstagramAccountInfo(token);
+    if (autoInfo.accountId) {
+      id = autoInfo.accountId;
+      saveInstagramCredentials({ accessToken: token, accountId: id });
+    }
+  }
+
+  if (!token) {
     return {
       success: false,
-      error: 'Missing Instagram Access Token or Account ID. Please configure keys in Settings.',
+      error: 'Instagram access token is missing or expired. Click "Reconnect Instagram Account" to refresh connection in 1 click.',
+    };
+  }
+
+  if (!id) {
+    return {
+      success: false,
+      error: 'No Instagram Business Account was detected on your Meta login. Please ensure your Instagram profile is a Professional/Business account connected to a Facebook page.',
     };
   }
 
