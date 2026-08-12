@@ -1,11 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
-
-if (!supabaseUrl || supabaseUrl === 'https://your-project-id.supabase.co') {
-  console.warn('[Lana] Supabase URL not configured. Add VITE_SUPABASE_URL to your .env file.');
-}
+const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string) || 'https://uhdrzxjgzzbhuybhvnun.supabase.co';
+const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVoZHJ6eGpnenpiaHV5Ymh2bnVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4MzQwNDYsImV4cCI6MjEwMTQxMDA0Nn0.JcuGIivSJ2KIyORJuslBnej5O5q8I0YET3jbvZUiLB4';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
