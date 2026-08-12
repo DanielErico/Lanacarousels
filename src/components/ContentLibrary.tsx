@@ -89,8 +89,23 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({
         </div>
       </div>
 
+      {/* Empty State */}
+      {filteredCarousels.length === 0 && (
+        <div className="navy-card rounded-3xl p-12 text-center space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 mx-auto flex items-center justify-center">
+            <FolderKanban className="w-6 h-6" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-base font-bold text-slate-900">No Carousels in Library</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              You haven't created any carousels yet. Click "AI Carousel Studio" or "Batch Generator" to create high-converting Instagram posts!
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Grid View */}
-      {viewMode === 'grid' ? (
+      {viewMode === 'grid' && filteredCarousels.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCarousels.map((car) => (
             <div

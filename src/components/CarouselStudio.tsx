@@ -22,7 +22,12 @@ import {
   Download,
   Archive,
   Loader2,
-  FileText
+  FileText,
+  Send,
+  CheckCircle2,
+  Clock,
+  X,
+  ExternalLink
 } from 'lucide-react';
 import { 
   Carousel, 
@@ -44,6 +49,7 @@ import {
   NEMOTRON_MODELS,
 } from '../services/aiService';
 import { exportSlidePng, exportCarouselZip } from '../services/exportService';
+import { publishCarouselToInstagram, schedulePostWithQStash } from '../services/instagramService';
 
 interface CarouselStudioProps {
   carousel?: Carousel;
@@ -137,6 +143,95 @@ export const CarouselStudio: React.FC<CarouselStudioProps> = ({
   const activeSlide = currentCarousel.slides[activeSlideIndex] || currentCarousel.slides[0];
 
   const activeSlideWords = `${activeSlide.headline} ${activeSlide.subtext}`.trim().split(/\s+/).filter(Boolean).length;
+
+  // Scheduling & Live Publishing State
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+  });
+  const [scheduleTime, setScheduleTime] = useState('10:00');
+  const [isPublishingNow, setIsPublishingNow] = useState(false);
+  const [publishSuccessMessage, setPublishSuccessMessage] = useState<{ url?: string; title: string } | null>(null);
+  const [publishErrorMessage, setPublishErrorMessage] = useState('');
+  const [isScheduling, setIsScheduling] = useState(false);
+
+  const handlePostNow = async () => {
+    setIsPublishingNow(true);
+    setPublishErrorMessage('');
+    setPublishSuccessMessage(null);
+
+    try {
+      const slideUrls: string[] = [];
+      const hiddenContainer = hiddenSlidesRef.current;
+
+      if (hiddenContainer && (window as any).html2canvas) {
+        for (let i = 0; i < currentCarousel.slides.length; i++) {
+          const slideEl = hiddenContainer.children[i] as HTMLElement;
+          if (slideEl) {
+            const canvas = await (window as any).html2canvas(slideEl, { scale: 2, useCORS: true });
+            const dataUrl = canvas.toDataURL('image/png');
+            slideUrls.push(dataUrl);
+          }
+        }
+      }
+
+      const fullCaption = `${currentCarousel.title}\n\n${currentCarousel.caption.text}\n\n${currentCarousel.caption.hashtags.join(' ')}`;
+
+      const res = await publishCarouselToInstagram(
+        currentCarousel.title,
+        fullCaption,
+        slideUrls.length > 0 ? slideUrls : ['https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1080&h=1350&fit=crop']
+      );
+
+      if (res.success) {
+        const updated = {
+          ...currentCarousel,
+          status: 'published' as const,
+          publishedAt: new Date().toISOString(),
+        };
+        setCurrentCarousel(updated);
+        await onSaveCarousel(updated);
+        setPublishSuccessMessage({
+          title: currentCarousel.title,
+          url: res.postUrl || 'https://www.instagram.com/',
+        });
+      } else {
+        setPublishErrorMessage(res.error || 'Failed to publish to Instagram.');
+      }
+    } catch (err: unknown) {
+      setPublishErrorMessage(err instanceof Error ? err.message : 'Network error during live post.');
+    } finally {
+      setIsPublishingNow(false);
+    }
+  };
+
+  const handleConfirmSchedule = async () => {
+    setIsScheduling(true);
+    try {
+      const scheduledDateTimeStr = `${scheduleDate}T${scheduleTime}:00Z`;
+
+      const updated = {
+        ...currentCarousel,
+        status: 'scheduled' as const,
+        scheduledAt: scheduledDateTimeStr,
+      };
+
+      setCurrentCarousel(updated);
+      await onSaveCarousel(updated);
+
+      // Call Upstash QStash background scheduling
+      await schedulePostWithQStash(updated.id, scheduledDateTimeStr, activeBrand.id);
+
+      setIsScheduleModalOpen(false);
+      onScheduleCarousel(updated);
+    } catch (err) {
+      console.error('Schedule error:', err);
+    } finally {
+      setIsScheduling(false);
+    }
+  };
 
   const handleRestructureTo7Slides = () => {
     const baseGradient = currentCarousel.slides[0].bgGradient;
@@ -897,36 +992,201 @@ export const CarouselStudio: React.FC<CarouselStudioProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center space-x-3">
+            <div className="flex flex-wrap items-center gap-3">
+              {/* 1-Click Post Now to Instagram */}
               <button
-                onClick={handleExportFullZip}
-                disabled={isExporting}
-                className="px-5 py-2.5 rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-900 font-bold text-xs flex items-center space-x-2 transition-all disabled:opacity-50 shadow-sm"
+                onClick={handlePostNow}
+                disabled={isPublishingNow}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 hover:opacity-95 text-white font-bold text-xs flex items-center space-x-2 shadow-md hover:scale-[1.02] transition-all disabled:opacity-50"
               >
-                {isExporting && exportProgress ? (
+                {isPublishingNow ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-                    <span>Packing Slide {exportProgress.current}/{exportProgress.total}...</span>
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    <span>Publishing to Instagram...</span>
                   </>
                 ) : (
                   <>
-                    <Archive className="w-4 h-4 text-blue-600" />
-                    <span>Export Full Carousel (.ZIP)</span>
+                    <Send className="w-4 h-4 text-white" />
+                    <span>Post Now to Instagram</span>
                   </>
                 )}
               </button>
 
+              {/* Schedule Post Modal Opener */}
               <button
-                onClick={() => onScheduleCarousel(currentCarousel)}
-                className="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center space-x-2 shadow-md hover:scale-[1.02] transition-all"
+                onClick={() => setIsScheduleModalOpen(true)}
+                className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center space-x-2 shadow-md hover:scale-[1.02] transition-all"
               >
-                <Calendar className="w-4 h-4 text-blue-400" />
+                <Calendar className="w-4 h-4 text-sky-400" />
                 <span>Schedule Post</span>
+              </button>
+
+              {/* Export ZIP */}
+              <button
+                onClick={handleExportFullZip}
+                disabled={isExporting}
+                className="px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-xs flex items-center space-x-2 transition-all disabled:opacity-50"
+              >
+                {isExporting && exportProgress ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-slate-600" />
+                    <span>Packing {exportProgress.current}/{exportProgress.total}...</span>
+                  </>
+                ) : (
+                  <>
+                    <Archive className="w-4 h-4 text-slate-600" />
+                    <span>Export ZIP</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Live Post Success Modal */}
+      {publishSuccessMessage && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white max-w-md w-full rounded-3xl p-6 border border-emerald-200 shadow-2xl space-y-4 text-center animate-in zoom-in-95">
+            <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center">
+              <CheckCircle2 className="w-7 h-7" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">Published to Instagram!</h3>
+              <p className="text-xs text-slate-500 mt-1">"{publishSuccessMessage.title}" is now live on your Instagram feed.</p>
+            </div>
+            <div className="pt-2 flex flex-col gap-2">
+              <a
+                href={publishSuccessMessage.url}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md"
+              >
+                <Instagram className="w-4 h-4 text-white" />
+                <span>View Post on Instagram</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+              <button
+                onClick={() => setPublishSuccessMessage(null)}
+                className="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Live Post Error Banner */}
+      {publishErrorMessage && (
+        <div className="fixed bottom-6 right-6 z-50 max-w-md p-4 rounded-2xl bg-rose-900 text-white shadow-2xl flex items-start gap-3 border border-rose-700 animate-in slide-in-from-bottom-5">
+          <AlertCircle className="w-5 h-5 text-rose-300 shrink-0 mt-0.5" />
+          <div className="flex-1 text-xs">
+            <p className="font-bold text-rose-200">Instagram Publishing Notice</p>
+            <p className="text-rose-100 mt-0.5">{publishErrorMessage}</p>
+          </div>
+          <button onClick={() => setPublishErrorMessage('')} className="text-rose-400 hover:text-white font-bold text-sm">✕</button>
+        </div>
+      )}
+
+      {/* Schedule Post Date & Time Picker Modal */}
+      {isScheduleModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white max-w-lg w-full rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-2xl space-y-6 animate-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+              <div className="flex items-center space-x-3">
+                <div className="p-2.5 rounded-xl bg-slate-900 text-white">
+                  <Calendar className="w-5 h-5 text-sky-400" />
+                </div>
+                <div>
+                  <h3 className="font-headline text-base font-bold text-slate-900">Schedule Auto-Publish</h3>
+                  <p className="text-xs text-slate-500">Pick date & time for automated release</p>
+                </div>
+              </div>
+              <button onClick={() => setIsScheduleModalOpen(false)} className="text-slate-400 hover:text-slate-900 font-bold text-xs p-1">
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase">Target Publishing Date</label>
+                <input
+                  type="date"
+                  value={scheduleDate}
+                  onChange={e => setScheduleDate(e.target.value)}
+                  className="w-full navy-input px-3.5 py-2.5 rounded-xl text-xs mt-1 font-mono font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase">Target Publishing Time</label>
+                <input
+                  type="time"
+                  value={scheduleTime}
+                  onChange={e => setScheduleTime(e.target.value)}
+                  className="w-full navy-input px-3.5 py-2.5 rounded-xl text-xs mt-1 font-mono font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase">Quick Time Slots</label>
+                <div className="grid grid-cols-4 gap-2 mt-1">
+                  {['09:00', '12:00', '16:00', '20:00'].map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setScheduleTime(t)}
+                      className={`py-1.5 rounded-lg text-xs font-mono font-bold border transition-all ${
+                        scheduleTime === t
+                          ? 'bg-sky-600 text-white border-sky-600 shadow-sm'
+                          : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-sky-50 border border-sky-200 text-xs space-y-1">
+                <div className="flex items-center space-x-1.5 text-sky-900 font-bold">
+                  <Clock className="w-4 h-4 text-sky-600" />
+                  <span>Automated Upstash QStash Queue</span>
+                </div>
+                <p className="text-slate-600 text-[11px]">
+                  Lana will automatically publish this carousel on <strong className="text-slate-900">{scheduleDate} at {scheduleTime}</strong> in the background — even if you are offline!
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsScheduleModalOpen(false)}
+                className="w-1/2 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmSchedule}
+                disabled={isScheduling}
+                className="w-1/2 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center space-x-2 shadow-md transition-all disabled:opacity-50"
+              >
+                {isScheduling ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
+                ) : (
+                  <>
+                    <Calendar className="w-4 h-4 text-sky-400" />
+                    <span>Confirm Schedule</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Hidden Render Container for Offscreen Full Carousel Capture */}
       <div style={{ position: 'absolute', top: '-9999px', left: '-9999px', pointerEvents: 'none' }}>

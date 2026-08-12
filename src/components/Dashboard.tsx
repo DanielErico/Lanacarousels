@@ -163,6 +163,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           <div className="space-y-3">
+            {carousels.length === 0 && (
+              <div className="p-8 text-center bg-slate-50/60 rounded-2xl border border-dashed border-slate-200 space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-sky-100 text-sky-600 mx-auto flex items-center justify-center">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-bold text-slate-900">No Carousels Created Yet</p>
+                  <p className="text-[11px] text-slate-500 max-w-xs mx-auto">
+                    Click "Create New Carousel" or "Generate Batch" to create your first Instagram Carousel!
+                  </p>
+                </div>
+                <button
+                  onClick={() => onNavigate('studio')}
+                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-sm"
+                >
+                  Create New Carousel
+                </button>
+              </div>
+            )}
             {carousels.map((car) => (
               <div 
                 key={car.id}

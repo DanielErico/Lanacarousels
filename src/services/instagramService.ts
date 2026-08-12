@@ -300,3 +300,36 @@ export async function publishCarouselToInstagram(
     };
   }
 }
+
+// ─── Schedule Background Post with Upstash QStash ──────────────────────────────
+
+export async function schedulePostWithQStash(
+  carouselId: string,
+  scheduledAt: string,
+  brandId?: string,
+  userId?: string
+): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  try {
+    const res = await fetch('/api/schedule-post', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ carouselId, scheduledAt, brandId, userId }),
+    });
+
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      return { success: false, error: data.error || `HTTP ${res.status}` };
+    }
+
+    return {
+      success: true,
+      messageId: data.messageId,
+    };
+  } catch (err: unknown) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Failed to schedule post.',
+    };
+  }
+}
+
