@@ -52,9 +52,16 @@ export function saveInstagramCredentials(creds: Partial<InstagramCredentials>) {
   if (creds.accountId !== undefined) localStorage.setItem(STORAGE_KEYS.ACCOUNT_ID, creds.accountId);
 }
 
-// ─── Connection Status Helper ──────────────────────────────────────────────────
+// ─── Connection Status Helpers ─────────────────────────────────────────────────
 
+/** True if an OAuth access token exists — matches what the Header shows. */
 export function isInstagramConnected(): boolean {
+  const creds = getStoredInstagramCredentials();
+  return Boolean(creds.accessToken);
+}
+
+/** True if both token AND account ID are stored (ready to publish). */
+export function isInstagramReadyToPublish(): boolean {
   const creds = getStoredInstagramCredentials();
   return Boolean(creds.accessToken && creds.accountId);
 }

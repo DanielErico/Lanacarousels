@@ -1,7 +1,7 @@
-import React from 'react';
-import { Settings, Instagram, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Settings, Instagram, ShieldCheck, CheckCircle2, AlertCircle, Key, ExternalLink } from 'lucide-react';
 import { Brand } from '../types/lana';
-import { initiateInstagramOAuthLogin } from '../services/instagramService';
+import { initiateInstagramOAuthLogin, getStoredInstagramCredentials, saveInstagramCredentials } from '../services/instagramService';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -14,7 +14,22 @@ interface SettingsModalProps {
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen, onClose, brand, whiteLabelMode, onToggleWhiteLabel,
 }) => {
+  const creds = getStoredInstagramCredentials();
+  const [manualAccountId, setManualAccountId] = useState(creds.accountId || '');
+  const [savedAccountId, setSavedAccountId] = useState(false);
+
   if (!isOpen) return null;
+
+  const hasToken = Boolean(creds.accessToken);
+  const hasAccountId = Boolean(creds.accountId || manualAccountId);
+
+  const handleSaveAccountId = () => {
+    if (manualAccountId.trim()) {
+      saveInstagramCredentials({ accountId: manualAccountId.trim() });
+      setSavedAccountId(true);
+      setTimeout(() => setSavedAccountId(false), 2000);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -28,7 +43,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
             <div>
               <h3 className="font-headline text-lg font-bold text-slate-900">Application Settings</h3>
-              <p className="text-xs text-slate-500">Instagram connection & agency white-label</p>
+              <p className="text-xs text-slate-500">Instagram connection &amp; agency white-label</p>
             </div>
           </div>
           <button 
@@ -39,8 +54,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </button>
         </div>
 
-        {/* ── Instagram 1-Click Connection Card ── */}
-        <div className="navy-card rounded-2xl p-5 space-y-4 border border-slate-200 bg-slate-50/50">
+        {/* ── Instagram Connection Card ── */}
+        <div className="rounded-2xl p-5 space-y-4 border border-slate-200 bg-slate-50/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="p-2.5 rounded-xl bg-gradient-to-tr from-purple-600 via-pink-600 to-amber-500 text-white shadow-md shadow-pink-500/20">
@@ -53,9 +68,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </p>
               </div>
             </div>
-            {brand.igConnected ? (
+            {/* Status pill: full ready / token only / not connected */}
+            {hasToken && hasAccountId ? (
               <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Connected
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Ready to Post
+              </span>
+            ) : hasToken ? (
+              <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 text-amber-500" /> Account ID Needed
               </span>
             ) : (
               <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-xs font-bold">
@@ -64,7 +84,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             )}
           </div>
 
-          {/* Primary Action: 1-Click Connect Button */}
+          {/* Connect / Reconnect button */}
           <button
             type="button"
             onClick={() => initiateInstagramOAuthLogin()}
@@ -73,6 +93,44 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <Instagram className="w-4 h-4 text-white" />
             <span>{brand.igConnected ? 'Reconnect Instagram Account' : 'Connect Instagram Account'}</span>
           </button>
+
+          {/* Manual Account ID fallback (shown when token exists but no accountId) */}
+          {hasToken && !creds.accountId && (
+            <div className="space-y-2 pt-1">
+              <div className="flex items-center gap-1.5 text-[10px] text-amber-700 font-semibold">
+                <AlertCircle className="w-3 h-3" />
+                Instagram Business Account ID not auto-detected. Enter it manually:
+              </div>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                  <input
+                    type="text"
+                    value={manualAccountId}
+                    onChange={e => setManualAccountId(e.target.value)}
+                    placeholder="e.g. 17841400008460056"
+                    className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all bg-white"
+                  />
+                </div>
+                <button
+                  onClick={handleSaveAccountId}
+                  disabled={!manualAccountId.trim()}
+                  className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all disabled:opacity-40 whitespace-nowrap"
+                >
+                  {savedAccountId ? '✓ Saved' : 'Save ID'}
+                </button>
+              </div>
+              <a
+                href="https://www.facebook.com/help/instagram/570895513091790"
+                target="_blank"
+                rel="noreferrer"
+                className="text-[10px] text-sky-600 hover:underline flex items-center gap-1"
+              >
+                <ExternalLink className="w-3 h-3" />
+                How to find your Instagram Account ID
+              </a>
+            </div>
+          )}
         </div>
 
         {/* ── White-Label Mode Card ── */}
