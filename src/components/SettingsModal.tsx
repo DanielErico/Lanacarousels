@@ -9,17 +9,19 @@ interface SettingsModalProps {
   brand: Brand;
   whiteLabelMode: boolean;
   onToggleWhiteLabel: () => void;
+  onUpdateBrand?: (brand: Brand) => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
-  isOpen, onClose, brand, whiteLabelMode, onToggleWhiteLabel,
+  isOpen, onClose, brand, whiteLabelMode, onToggleWhiteLabel, onUpdateBrand
 }) => {
   const creds = getStoredInstagramCredentials();
   const [manualAccountId, setManualAccountId] = useState(creds.accountId || '');
+  const [handleInput, setHandleInput] = useState(brand.igHandle || '@lana.carousel');
   const [savedAccountId, setSavedAccountId] = useState(false);
+  const [savedHandle, setSavedHandle] = useState(false);
   const [detecting, setDetecting] = useState(false);
   const [detectResult, setDetectResult] = useState<{ id?: string; username?: string; error?: string } | null>(null);
-  // Track the IG username stored against the live token (may differ from brand.igHandle)
   const [storedUsername] = useState<string>(() => {
     return localStorage.getItem('lana_ig_detected_username') || '';
   });
@@ -28,6 +30,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const hasToken = Boolean(creds.accessToken);
   const hasAccountId = Boolean(creds.accountId || manualAccountId);
+
+  const handleSaveHandle = () => {
+    const formatted = handleInput.startsWith('@') ? handleInput.trim() : `@${handleInput.trim()}`;
+    localStorage.setItem('lana_ig_custom_handle', formatted);
+    if (onUpdateBrand) {
+      onUpdateBrand({
+        ...brand,
+        igHandle: formatted,
+      });
+    }
+    setSavedHandle(true);
+    setTimeout(() => setSavedHandle(false), 2000);
+  };
 
   const handleSaveAccountId = () => {
     if (manualAccountId.trim()) {
@@ -128,6 +143,37 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </span>
             </div>
           )}
+
+          {/* Editable Instagram Handle input */}
+          <div className="space-y-1.5 pt-2 border-t border-slate-100">
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                Instagram Handle
+              </label>
+              {savedHandle && (
+                <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3" /> Handle Saved!
+                </span>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={handleInput}
+                onChange={e => setHandleInput(e.target.value)}
+                placeholder="@lana.carousel"
+                className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all bg-white font-mono"
+              />
+              <button
+                type="button"
+                onClick={handleSaveHandle}
+                disabled={!handleInput.trim() || handleInput === brand.igHandle}
+                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all disabled:opacity-40 whitespace-nowrap"
+              >
+                Save Handle
+              </button>
+            </div>
+          </div>
           <button
             type="button"
             onClick={() => initiateInstagramOAuthLogin()}

@@ -49,10 +49,13 @@ export const App: React.FC = () => {
         // Check if user just completed 1-Click Meta Instagram OAuth login redirect
         const oauthRes = await parseInstagramOAuthCallback();
         if (oauthRes.success) {
+          const customHandle = localStorage.getItem('lana_ig_custom_handle');
+          const finalHandle = customHandle || (primary.igHandle && primary.igHandle !== '@brand' && primary.igHandle !== '@connected' ? primary.igHandle : (oauthRes.username ? `@${oauthRes.username.replace('@', '')}` : '@lana.carousel'));
+
           primary = {
             ...primary,
             igConnected: true,
-            igHandle: oauthRes.username ? `@${oauthRes.username.replace('@', '')}` : (primary.igHandle || '@connected'),
+            igHandle: finalHandle,
             igAccountName: oauthRes.username || primary.igAccountName,
           };
           await saveBrandToSupabase(user.id, primary);
@@ -299,6 +302,7 @@ export const App: React.FC = () => {
         brand={currentBrand}
         whiteLabelMode={whiteLabelMode}
         onToggleWhiteLabel={() => setWhiteLabelMode(!whiteLabelMode)}
+        onUpdateBrand={handleUpdateBrand}
       />
     </div>
   );
