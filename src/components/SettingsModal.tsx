@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Settings, Instagram, ShieldCheck, CheckCircle2, AlertCircle, Key, ExternalLink } from 'lucide-react';
+import { Settings, Instagram, ShieldCheck, CheckCircle2, AlertCircle, Key, ExternalLink, RefreshCw, Loader2 } from 'lucide-react';
 import { Brand } from '../types/lana';
-import { initiateInstagramOAuthLogin, getStoredInstagramCredentials, saveInstagramCredentials } from '../services/instagramService';
+import { initiateInstagramOAuthLogin, getStoredInstagramCredentials, saveInstagramCredentials, fetchLinkedInstagramAccountInfo } from '../services/instagramService';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -17,6 +17,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const creds = getStoredInstagramCredentials();
   const [manualAccountId, setManualAccountId] = useState(creds.accountId || '');
   const [savedAccountId, setSavedAccountId] = useState(false);
+  const [detecting, setDetecting] = useState(false);
+  const [detectResult, setDetectResult] = useState<{ id?: string; username?: string; error?: string } | null>(null);
 
   if (!isOpen) return null;
 
@@ -30,6 +32,30 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       setTimeout(() => setSavedAccountId(false), 2000);
     }
   };
+
+  const handleAutoDetect = async () => {
+    if (!creds.accessToken) return;
+    setDetecting(true);
+    setDetectResult(null);
+    try {
+      const info = await fetchLinkedInstagramAccountInfo(creds.accessToken);
+      if (info.accountId) {
+        setDetectResult({ id: info.accountId, username: info.username });
+        setManualAccountId(info.accountId);
+        // Auto-save immediately
+        saveInstagramCredentials({ accountId: info.accountId });
+        setSavedAccountId(true);
+        setTimeout(() => setSavedAccountId(false), 3000);
+      } else {
+        setDetectResult({ error: info.error || 'No Instagram Business Account found linked to this token. Make sure your IG is a Professional account connected to a Facebook Page.' });
+      }
+    } catch {
+      setDetectResult({ error: 'Network error during detection.' });
+    } finally {
+      setDetecting(false);
+    }
+  };
+
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -94,13 +120,49 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <span>{brand.igConnected ? 'Reconnect Instagram Account' : 'Connect Instagram Account'}</span>
           </button>
 
-          {/* Manual Account ID fallback (shown when token exists but no accountId) */}
-          {hasToken && !creds.accountId && (
-            <div className="space-y-2 pt-1">
-              <div className="flex items-center gap-1.5 text-[10px] text-amber-700 font-semibold">
-                <AlertCircle className="w-3 h-3" />
-                Instagram Business Account ID not auto-detected. Enter it manually:
+          {/* Account ID section — shown whenever token is present */}
+          {hasToken && (
+            <div className="space-y-3 pt-1 border-t border-slate-100">
+              <div className="flex items-center justify-between">
+                <div className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                  Instagram Business Account ID
+                </div>
+                {savedAccountId && (
+                  <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" /> Saved!
+                  </span>
+                )}
               </div>
+
+              {/* Auto-detect button */}
+              <button
+                onClick={handleAutoDetect}
+                disabled={detecting}
+                className="w-full py-2.5 rounded-xl border-2 border-dashed border-sky-300 bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold text-xs flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+              >
+                {detecting ? (
+                  <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Detecting from Meta API...</>
+                ) : (
+                  <><RefreshCw className="w-3.5 h-3.5" /> Auto-Detect Account ID</>
+                )}
+              </button>
+
+              {/* Detection result */}
+              {detectResult && (
+                detectResult.error ? (
+                  <div className="flex items-start gap-2 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-[10px] leading-relaxed">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                    <span>{detectResult.error}</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-semibold">
+                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                    Found: <strong>@{detectResult.username}</strong> — ID: <code className="font-mono">{detectResult.id}</code>
+                  </div>
+                )
+              )}
+
+              {/* Manual input fallback */}
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
@@ -108,8 +170,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     type="text"
                     value={manualAccountId}
                     onChange={e => setManualAccountId(e.target.value)}
-                    placeholder="e.g. 17841400008460056"
-                    className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all bg-white"
+                    placeholder="Or paste ID manually — e.g. 17841400008460056"
+                    className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all bg-white font-mono"
                   />
                 </div>
                 <button
@@ -117,18 +179,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   disabled={!manualAccountId.trim()}
                   className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all disabled:opacity-40 whitespace-nowrap"
                 >
-                  {savedAccountId ? '✓ Saved' : 'Save ID'}
+                  Save ID
                 </button>
               </div>
-              <a
-                href="https://www.facebook.com/help/instagram/570895513091790"
-                target="_blank"
-                rel="noreferrer"
-                className="text-[10px] text-sky-600 hover:underline flex items-center gap-1"
-              >
-                <ExternalLink className="w-3 h-3" />
-                How to find your Instagram Account ID
-              </a>
+              <p className="text-[10px] text-slate-400">
+                ⚠ Must be a 17-digit Instagram Business/Creator Account ID — not a Facebook Page or User ID.
+              </p>
             </div>
           )}
         </div>
