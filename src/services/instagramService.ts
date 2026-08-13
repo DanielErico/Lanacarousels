@@ -1,4 +1,5 @@
 // ─── Meta Instagram Graph API Service ──────────────────────────────────────────
+import { supabase } from './supabaseClient';
 
 export interface InstagramCredentials {
   appId: string;
@@ -49,6 +50,13 @@ export function saveInstagramCredentials(creds: Partial<InstagramCredentials>) {
   if (creds.appSecret !== undefined) localStorage.setItem(STORAGE_KEYS.APP_SECRET, creds.appSecret);
   if (creds.accessToken !== undefined) localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, creds.accessToken);
   if (creds.accountId !== undefined) localStorage.setItem(STORAGE_KEYS.ACCOUNT_ID, creds.accountId);
+}
+
+// ─── Connection Status Helper ──────────────────────────────────────────────────
+
+export function isInstagramConnected(): boolean {
+  const creds = getStoredInstagramCredentials();
+  return Boolean(creds.accessToken && creds.accountId);
 }
 
 // ─── 1-Click Meta / Instagram OAuth Redirect Flow ──────────────────────────────
@@ -251,6 +259,63 @@ export async function verifyInstagramCredentials(
   }
 }
 
+// ─── Supabase Storage Image Upload ────────────────────────────────────────────
+// Converts base64 data: URLs (from html2canvas) into publicly-accessible HTTPS
+// URLs via Supabase Storage so Meta's Graph API can fetch them.
+
+export async function uploadSlidesToSupabaseStorage(
+  dataUrls: string[],
+  carouselId: string
+): Promise<{ publicUrls: string[]; error?: string }> {
+  const publicUrls: string[] = [];
+
+  for (let i = 0; i < dataUrls.length; i++) {
+    const dataUrl = dataUrls[i];
+
+    // Skip non-base64 URLs (already HTTPS) — pass through unchanged
+    if (!dataUrl.startsWith('data:')) {
+      publicUrls.push(dataUrl);
+      continue;
+    }
+
+    try {
+      // Convert base64 data URL → Blob
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+
+      const fileName = `carousel-slides/${carouselId}/slide-${i + 1}-${Date.now()}.png`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('carousel-images')
+        .upload(fileName, blob, {
+          contentType: 'image/png',
+          upsert: true,
+        });
+
+      if (uploadError) {
+        return { publicUrls: [], error: `Failed to upload slide ${i + 1}: ${uploadError.message}` };
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('carousel-images')
+        .getPublicUrl(fileName);
+
+      if (!urlData?.publicUrl) {
+        return { publicUrls: [], error: `Could not get public URL for slide ${i + 1}.` };
+      }
+
+      publicUrls.push(urlData.publicUrl);
+    } catch (err) {
+      return {
+        publicUrls: [],
+        error: err instanceof Error ? err.message : `Failed to process slide ${i + 1} image.`,
+      };
+    }
+  }
+
+  return { publicUrls };
+}
+
 // ─── Carousel Publishing via Meta Graph API ────────────────────────────────────
 
 export async function publishCarouselToInstagram(
@@ -258,7 +323,8 @@ export async function publishCarouselToInstagram(
   captionText: string,
   imageUrls: string[],
   accessToken?: string,
-  accountId?: string
+  accountId?: string,
+  carouselId?: string
 ): Promise<{ success: boolean; postUrl?: string; id?: string; error?: string }> {
   const creds = getStoredInstagramCredentials();
   let token = accessToken || creds.accessToken;
@@ -285,6 +351,20 @@ export async function publishCarouselToInstagram(
       success: false,
       error: 'No Instagram Business Account was detected on your Meta login. Please ensure your Instagram profile is a Professional/Business account connected to a Facebook page.',
     };
+  }
+
+  // ── Upload any base64 data: URLs to Supabase Storage → get public HTTPS URLs ──
+  const hasDataUrls = imageUrls.some(u => u.startsWith('data:'));
+  if (hasDataUrls) {
+    const uploadId = carouselId || `tmp-${Date.now()}`;
+    const uploadResult = await uploadSlidesToSupabaseStorage(imageUrls, uploadId);
+    if (uploadResult.error) {
+      return {
+        success: false,
+        error: `Image upload failed: ${uploadResult.error}. Please check your Supabase Storage bucket "carousel-images" is set to public.`,
+      };
+    }
+    imageUrls = uploadResult.publicUrls;
   }
 
   try {

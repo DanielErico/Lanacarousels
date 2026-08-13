@@ -49,7 +49,7 @@ import {
   NEMOTRON_MODELS,
 } from '../services/aiService';
 import { exportSlidePng, exportCarouselZip } from '../services/exportService';
-import { publishCarouselToInstagram, schedulePostWithQStash, getStoredInstagramCredentials, initiateInstagramOAuthLogin } from '../services/instagramService';
+import { publishCarouselToInstagram, schedulePostWithQStash, getStoredInstagramCredentials, initiateInstagramOAuthLogin, isInstagramConnected } from '../services/instagramService';
 
 interface CarouselStudioProps {
   carousel?: Carousel;
@@ -186,10 +186,14 @@ export const CarouselStudio: React.FC<CarouselStudioProps> = ({
 
       const fullCaption = `${currentCarousel.title}\n\n${currentCarousel.caption.text}\n\n${currentCarousel.caption.hashtags.join(' ')}`;
 
+      // Pass carouselId so Supabase Storage uploads are properly namespaced
       const res = await publishCarouselToInstagram(
         currentCarousel.title,
         fullCaption,
-        slideUrls.length > 0 ? slideUrls : ['https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1080&h=1350&fit=crop']
+        slideUrls.length > 0 ? slideUrls : ['https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1080&h=1350&fit=crop'],
+        undefined,
+        undefined,
+        currentCarousel.id
       );
 
       if (res.success) {
@@ -1000,6 +1004,17 @@ export const CarouselStudio: React.FC<CarouselStudioProps> = ({
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
+              {/* Instagram Connection Status Badge */}
+              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold border ${
+                isInstagramConnected()
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                  : 'bg-amber-50 border-amber-200 text-amber-700'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${isInstagramConnected() ? 'bg-emerald-500' : 'bg-amber-400'}`} />
+                <Instagram className="w-3 h-3" />
+                {isInstagramConnected() ? 'IG Connected' : 'Not Connected'}
+              </div>
+
               {/* 1-Click Post Now to Instagram */}
               <button
                 onClick={handlePostNow}
@@ -1009,7 +1024,7 @@ export const CarouselStudio: React.FC<CarouselStudioProps> = ({
                 {isPublishingNow ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin text-white" />
-                    <span>Publishing to Instagram...</span>
+                    <span>Uploading & Publishing...</span>
                   </>
                 ) : (
                   <>

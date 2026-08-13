@@ -21,10 +21,10 @@ export default async function handler(req: Request) {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fetch Carousel from Supabase DB
+    // ── 1. Fetch Carousel from Supabase ──────────────────────────────────────
     const { data: carousel, error: carError } = await supabase
       .from('carousels')
-      .select('*')
+      .select('*, slides(*)')
       .eq('id', carouselId)
       .single();
 
@@ -32,7 +32,7 @@ export default async function handler(req: Request) {
       return new Response(JSON.stringify({ error: carError?.message || 'Carousel not found' }), { status: 404 });
     }
 
-    // Fetch Brand credentials from Supabase DB
+    // ── 2. Fetch Brand credentials (IG token + account ID) ───────────────────
     const { data: brand, error: brandError } = await supabase
       .from('brands')
       .select('*')
@@ -47,14 +47,66 @@ export default async function handler(req: Request) {
     const accountId = process.env.VITE_INSTAGRAM_ACCOUNT_ID || brand.ig_account_id;
 
     if (!accessToken || !accountId) {
-      return new Response(JSON.stringify({ error: 'Instagram Access Token or Account ID not found in DB.' }), { status: 400 });
+      return new Response(JSON.stringify({
+        error: 'Instagram Access Token or Account ID not found. Please reconnect your Instagram account in Settings.',
+      }), { status: 400 });
     }
 
-    // Parse slides to publish
-    const slides = carousel.slides || [];
+    // ── 3. Collect published slide image URLs ────────────────────────────────
+    const slides = (carousel.slides || []).sort((a: any, b: any) => a.order_index - b.order_index);
+    const imageUrls: string[] = slides.map((s: any) => s.image_url).filter(Boolean);
+
+    if (imageUrls.length === 0) {
+      return new Response(JSON.stringify({
+        error: 'No publicly accessible slide image URLs found. Please publish directly from the Carousel Studio instead.',
+      }), { status: 400 });
+    }
+
     const caption = carousel.caption_text || carousel.title || 'Created with Lana IG Carousels';
 
-    // Update status in Supabase DB to published
+    // ── 4. Meta Graph API: Step 1 — Create individual media item containers ──
+    const itemContainerIds: string[] = [];
+    for (let i = 0; i < imageUrls.length; i++) {
+      const itemRes = await fetch(
+        `https://graph.facebook.com/v19.0/${accountId}/media?image_url=${encodeURIComponent(imageUrls[i])}&is_carousel_item=true&access_token=${accessToken}`,
+        { method: 'POST' }
+      );
+      const itemData = await itemRes.json();
+      if (!itemRes.ok || itemData.error) {
+        return new Response(JSON.stringify({
+          error: `Slide ${i + 1} container failed: ${itemData.error?.message || `HTTP ${itemRes.status}`}`,
+        }), { status: 502 });
+      }
+      itemContainerIds.push(itemData.id);
+    }
+
+    // ── 5. Meta Graph API: Step 2 — Create parent CAROUSEL container ─────────
+    const childrenParam = itemContainerIds.join(',');
+    const carouselRes = await fetch(
+      `https://graph.facebook.com/v19.0/${accountId}/media?media_type=CAROUSEL&children=${childrenParam}&caption=${encodeURIComponent(caption)}&access_token=${accessToken}`,
+      { method: 'POST' }
+    );
+    const carouselData = await carouselRes.json();
+    if (!carouselRes.ok || carouselData.error) {
+      return new Response(JSON.stringify({
+        error: `Carousel container failed: ${carouselData.error?.message || `HTTP ${carouselRes.status}`}`,
+      }), { status: 502 });
+    }
+    const creationId = carouselData.id;
+
+    // ── 6. Meta Graph API: Step 3 — Publish to live Instagram Feed ───────────
+    const publishRes = await fetch(
+      `https://graph.facebook.com/v19.0/${accountId}/media_publish?creation_id=${creationId}&access_token=${accessToken}`,
+      { method: 'POST' }
+    );
+    const publishData = await publishRes.json();
+    if (!publishRes.ok || publishData.error) {
+      return new Response(JSON.stringify({
+        error: `Instagram publish failed: ${publishData.error?.message || `HTTP ${publishRes.status}`}`,
+      }), { status: 502 });
+    }
+
+    // ── 7. Update Supabase status to published (only after confirmed IG post) ─
     const { error: updateError } = await supabase
       .from('carousels')
       .update({
@@ -65,15 +117,17 @@ export default async function handler(req: Request) {
       .eq('id', carouselId);
 
     if (updateError) {
-      console.warn('[Lana Auto-Publish] Failed to update status in Supabase:', updateError.message);
+      console.warn('[Lana Auto-Publish] Supabase status update failed:', updateError.message);
     }
 
     return new Response(JSON.stringify({
       success: true,
       carouselId,
+      postId: publishData.id,
+      postUrl: `https://www.instagram.com/p/${publishData.id}/`,
       status: 'published',
       publishedAt: new Date().toISOString(),
-      message: `Successfully auto-published carousel "${carousel.title}" to Instagram!`,
+      message: `Successfully published carousel "${carousel.title}" to Instagram!`,
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
