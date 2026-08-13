@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Settings, Instagram, ShieldCheck, CheckCircle2, AlertCircle, Key, ExternalLink, RefreshCw, Loader2 } from 'lucide-react';
 import { Brand } from '../types/lana';
-import { initiateInstagramOAuthLogin, getStoredInstagramCredentials, saveInstagramCredentials, fetchLinkedInstagramAccountInfo } from '../services/instagramService';
+import { initiateInstagramOAuthLogin, getStoredInstagramCredentials, saveInstagramCredentials, fetchLinkedInstagramAccountInfo, clearInstagramCredentials } from '../services/instagramService';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -19,6 +19,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [savedAccountId, setSavedAccountId] = useState(false);
   const [detecting, setDetecting] = useState(false);
   const [detectResult, setDetectResult] = useState<{ id?: string; username?: string; error?: string } | null>(null);
+  // Track the IG username stored against the live token (may differ from brand.igHandle)
+  const [storedUsername] = useState<string>(() => {
+    return localStorage.getItem('lana_ig_detected_username') || '';
+  });
 
   if (!isOpen) return null;
 
@@ -42,8 +46,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       if (info.accountId) {
         setDetectResult({ id: info.accountId, username: info.username });
         setManualAccountId(info.accountId);
-        // Auto-save immediately
+        // Auto-save immediately + store username for display
         saveInstagramCredentials({ accountId: info.accountId });
+        if (info.username) {
+          localStorage.setItem('lana_ig_detected_username', info.username);
+        }
         setSavedAccountId(true);
         setTimeout(() => setSavedAccountId(false), 3000);
       } else {
@@ -110,7 +117,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             )}
           </div>
 
-          {/* Connect / Reconnect button */}
+          {/* Wrong account warning — shown when live token username differs from saved brand handle */}
+          {hasToken && storedUsername && brand.igHandle &&
+            storedUsername !== brand.igHandle.replace('@', '') && (
+            <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[10px] leading-relaxed">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-500" />
+              <span>
+                Token is from <strong>@{storedUsername}</strong> but your brand handle is <strong>{brand.igHandle}</strong>.{' '}
+                Click <strong>Reconnect</strong> and log in with the Facebook account linked to <strong>{brand.igHandle}</strong>.
+              </span>
+            </div>
+          )}
           <button
             type="button"
             onClick={() => initiateInstagramOAuthLogin()}

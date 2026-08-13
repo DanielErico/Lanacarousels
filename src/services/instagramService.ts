@@ -52,6 +52,13 @@ export function saveInstagramCredentials(creds: Partial<InstagramCredentials>) {
   if (creds.accountId !== undefined) localStorage.setItem(STORAGE_KEYS.ACCOUNT_ID, creds.accountId);
 }
 
+/** Wipes all stored OAuth credentials — call before reconnecting to avoid stale token/ID mismatches. */
+export function clearInstagramCredentials() {
+  localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+  localStorage.removeItem(STORAGE_KEYS.ACCOUNT_ID);
+  localStorage.removeItem('lana_ig_detected_username');
+}
+
 // ─── Connection Status Helpers ─────────────────────────────────────────────────
 
 /** True if an OAuth access token exists — matches what the Header shows. */
@@ -76,6 +83,10 @@ export function initiateInstagramOAuthLogin(customAppId?: string) {
     alert('Please enter your Meta App ID in Settings before connecting Instagram.');
     return;
   }
+
+  // Clear stale token & accountId so the new login session starts clean.
+  // This prevents a @lana_carousels token being used with a @lana.carousel account ID.
+  clearInstagramCredentials();
 
   const redirectUri = `${window.location.origin}/`;
   const scopes = [
@@ -120,6 +131,11 @@ export async function parseInstagramOAuthCallback(): Promise<{
     accessToken,
     accountId: linkedInfo.accountId || '',
   });
+
+  // Persist username so Settings can detect account mismatches
+  if (linkedInfo.username) {
+    localStorage.setItem('lana_ig_detected_username', linkedInfo.username);
+  }
 
   return {
     success: true,
