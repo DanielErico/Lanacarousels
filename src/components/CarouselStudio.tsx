@@ -188,9 +188,9 @@ export const CarouselStudio: React.FC<CarouselStudioProps> = ({
 
       // Pass carouselId so Supabase Storage uploads are properly namespaced
       const res = await publishCarouselToInstagram(
+        slideUrls.length > 0 ? slideUrls : ['https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1080&h=1350&fit=crop'],
         currentCarousel.title,
         fullCaption,
-        slideUrls.length > 0 ? slideUrls : ['https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1080&h=1350&fit=crop'],
         undefined,
         undefined,
         currentCarousel.id

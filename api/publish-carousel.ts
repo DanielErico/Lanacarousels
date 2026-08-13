@@ -67,10 +67,17 @@ export default async function handler(req: Request) {
     // ── 4. Meta Graph API: Step 1 — Create individual media item containers ──
     const itemContainerIds: string[] = [];
     for (let i = 0; i < imageUrls.length; i++) {
-      const itemRes = await fetch(
-        `https://graph.facebook.com/v19.0/${accountId}/media?image_url=${encodeURIComponent(imageUrls[i])}&is_carousel_item=true&access_token=${accessToken}`,
-        { method: 'POST' }
-      );
+      const itemBody = new URLSearchParams({
+        image_url: imageUrls[i],
+        is_carousel_item: 'true',
+        access_token: accessToken,
+      });
+
+      const itemRes = await fetch(`https://graph.facebook.com/v19.0/${accountId}/media`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: itemBody,
+      });
       const itemData = await itemRes.json();
       if (!itemRes.ok || itemData.error) {
         return new Response(JSON.stringify({
@@ -81,11 +88,18 @@ export default async function handler(req: Request) {
     }
 
     // ── 5. Meta Graph API: Step 2 — Create parent CAROUSEL container ─────────
-    const childrenParam = itemContainerIds.join(',');
-    const carouselRes = await fetch(
-      `https://graph.facebook.com/v19.0/${accountId}/media?media_type=CAROUSEL&children=${childrenParam}&caption=${encodeURIComponent(caption)}&access_token=${accessToken}`,
-      { method: 'POST' }
-    );
+    const carouselBody = new URLSearchParams({
+      media_type: 'CAROUSEL',
+      children: JSON.stringify(itemContainerIds),
+      caption,
+      access_token: accessToken,
+    });
+
+    const carouselRes = await fetch(`https://graph.facebook.com/v19.0/${accountId}/media`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: carouselBody,
+    });
     const carouselData = await carouselRes.json();
     if (!carouselRes.ok || carouselData.error) {
       return new Response(JSON.stringify({
@@ -95,10 +109,16 @@ export default async function handler(req: Request) {
     const creationId = carouselData.id;
 
     // ── 6. Meta Graph API: Step 3 — Publish to live Instagram Feed ───────────
-    const publishRes = await fetch(
-      `https://graph.facebook.com/v19.0/${accountId}/media_publish?creation_id=${creationId}&access_token=${accessToken}`,
-      { method: 'POST' }
-    );
+    const publishBody = new URLSearchParams({
+      creation_id: creationId,
+      access_token: accessToken,
+    });
+
+    const publishRes = await fetch(`https://graph.facebook.com/v19.0/${accountId}/media_publish`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: publishBody,
+    });
     const publishData = await publishRes.json();
     if (!publishRes.ok || publishData.error) {
       return new Response(JSON.stringify({

@@ -153,7 +153,7 @@ export async function fetchLinkedInstagramAccountInfo(accessToken: string): Prom
   error?: string;
 }> {
   try {
-    // Attempt 1: Fetch via Facebook Pages accounts list (both instagram_business_account and connected_instagram_account)
+    // Attempt 1: Fetch via Facebook Pages accounts list
     const res1 = await fetch(
       `https://graph.facebook.com/v19.0/me/accounts?fields=access_token,name,instagram_business_account{id,name,username},connected_instagram_account{id,name,username}&access_token=${accessToken}`
     );
@@ -218,7 +218,7 @@ export async function fetchLinkedInstagramAccountInfo(accessToken: string): Prom
       };
     }
 
-    return { error: 'No Instagram Business Account linked to your Facebook Page was found.' };
+    return { error: 'No Instagram Business Account linked to your Facebook Page was found. Ensure your IG profile is a Business/Creator account linked to a Facebook Page.' };
   } catch (err: unknown) {
     return { error: err instanceof Error ? err.message : 'Network error.' };
   }
@@ -239,7 +239,6 @@ export async function verifyInstagramCredentials(
   }
 
   try {
-    // If account ID provided, fetch specific IG business account info
     const endpoint = id
       ? `https://graph.facebook.com/v19.0/${id}?fields=id,name,username,profile_picture_url&access_token=${token}`
       : `https://graph.facebook.com/v19.0/me/accounts?fields=name,instagram_business_account{id,name,username}&access_token=${token}`;
@@ -248,36 +247,29 @@ export async function verifyInstagramCredentials(
     const data = await res.json();
 
     if (!res.ok || data.error) {
-      const msg = data.error?.message || `Meta Graph API HTTP ${res.status}`;
-      return { success: false, error: msg };
+      return {
+        success: false,
+        error: data.error?.message || 'Meta API verification failed.',
+      };
     }
 
-    if (id) {
+    if (id && data.id) {
       return {
         success: true,
         profile: {
           id: data.id,
-          name: data.name || data.username,
+          name: data.name,
           username: data.username,
           profile_picture_url: data.profile_picture_url,
         },
       };
     }
 
-    // Fallback: Return first linked account info
-    const firstAccount = data.data?.[0]?.instagram_business_account || data.data?.[0];
-    return {
-      success: true,
-      profile: {
-        id: firstAccount?.id || 'verified',
-        name: firstAccount?.name || 'Linked Meta Account',
-        username: firstAccount?.username || firstAccount?.name,
-      },
-    };
+    return { success: true };
   } catch (err: unknown) {
     return {
       success: false,
-      error: err instanceof Error ? err.message : 'Network error verifying Meta API key.',
+      error: err instanceof Error ? err.message : 'Verification failed.',
     };
   }
 }
@@ -339,22 +331,22 @@ export async function uploadSlidesToSupabaseStorage(
   return { publicUrls };
 }
 
-// ─── Carousel Publishing via Meta Graph API ────────────────────────────────────
+// ─── Direct Instagram Carousel Publishing Flow ──────────────────────────────────
 
 export async function publishCarouselToInstagram(
+  imageUrls: string[],
   carouselTitle: string,
   captionText: string,
-  imageUrls: string[],
-  accessToken?: string,
-  accountId?: string,
+  customToken?: string,
+  customAccountId?: string,
   carouselId?: string
-): Promise<{ success: boolean; postUrl?: string; id?: string; error?: string }> {
+): Promise<{ success: boolean; id?: string; postUrl?: string; error?: string }> {
   const creds = getStoredInstagramCredentials();
-  let token = accessToken || creds.accessToken;
-  let id = accountId || creds.accountId;
+  const token = customToken || creds.accessToken;
+  let id = customAccountId || creds.accountId;
 
-  // Auto-detect Account ID if token is available but accountId is missing
-  if (token && !id) {
+  // Auto-detect account ID if missing
+  if (!id && token) {
     const autoInfo = await fetchLinkedInstagramAccountInfo(token);
     if (autoInfo.accountId) {
       id = autoInfo.accountId;
@@ -394,40 +386,61 @@ export async function publishCarouselToInstagram(
     // Step 1: Create media item containers for each slide image
     const itemContainerIds: string[] = [];
 
-    for (const url of imageUrls) {
-      const itemRes = await fetch(
-        `https://graph.facebook.com/v19.0/${id}/media?image_url=${encodeURIComponent(url)}&is_carousel_item=true&access_token=${token}`,
-        { method: 'POST' }
-      );
+    for (let i = 0; i < imageUrls.length; i++) {
+      const url = imageUrls[i];
+      const body = new URLSearchParams({
+        image_url: url,
+        is_carousel_item: 'true',
+        access_token: token,
+      });
+
+      const itemRes = await fetch(`https://graph.facebook.com/v19.0/${id}/media`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body,
+      });
       const itemData = await itemRes.json();
 
       if (!itemRes.ok || itemData.error) {
-        throw new Error(itemData.error?.message || `Failed to create carousel item for image.`);
+        throw new Error(itemData.error?.message || `Failed to create container for slide ${i + 1}.`);
       }
 
       itemContainerIds.push(itemData.id);
     }
 
     // Step 2: Create parent carousel container
-    const childrenParam = itemContainerIds.join(',');
-    const fullCaption = `${carouselTitle}\n\n${captionText}`;
-    const carouselRes = await fetch(
-      `https://graph.facebook.com/v19.0/${id}/media?media_type=CAROUSEL&children=${childrenParam}&caption=${encodeURIComponent(fullCaption)}&access_token=${token}`,
-      { method: 'POST' }
-    );
+    const fullCaption = `${carouselTitle}\n\n${captionText}`.trim();
+    const carouselBody = new URLSearchParams({
+      media_type: 'CAROUSEL',
+      children: JSON.stringify(itemContainerIds),
+      caption: fullCaption,
+      access_token: token,
+    });
+
+    const carouselRes = await fetch(`https://graph.facebook.com/v19.0/${id}/media`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: carouselBody,
+    });
     const carouselData = await carouselRes.json();
 
     if (!carouselRes.ok || carouselData.error) {
-      throw new Error(carouselData.error?.message || 'Failed to create carousel container.');
+      throw new Error(carouselData.error?.message || 'Failed to create parent carousel container.');
     }
 
     const creationId = carouselData.id;
 
     // Step 3: Publish container to live Instagram Feed
-    const publishRes = await fetch(
-      `https://graph.facebook.com/v19.0/${id}/media_publish?creation_id=${creationId}&access_token=${token}`,
-      { method: 'POST' }
-    );
+    const publishBody = new URLSearchParams({
+      creation_id: creationId,
+      access_token: token,
+    });
+
+    const publishRes = await fetch(`https://graph.facebook.com/v19.0/${id}/media_publish`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: publishBody,
+    });
     const publishData = await publishRes.json();
 
     if (!publishRes.ok || publishData.error) {
