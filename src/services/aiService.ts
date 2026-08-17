@@ -274,7 +274,7 @@ function buildCarouselObject(
       suggestions: [
         hookWords > 10 ? 'Shorten your hook to under 10 words for max impact' : '✓ Hook length is optimal',
         avgWords > 30 ? 'Reduce word count per slide — aim for under 30 words' : '✓ Slide copy is concise',
-        '✓ Generated with NVIDIA Nemotron',
+        '✓ Generated with AI',
       ],
     },
   };

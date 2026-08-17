@@ -777,7 +777,7 @@ export const CarouselStudio: React.FC<CarouselStudioProps> = ({
             {isGenerating ? (
               <>
                 <RefreshCw className="w-4 h-4 animate-spin text-white" />
-                <span>Generating with Nemotron...</span>
+                <span>Generating...</span>
               </>
             ) : (
               <>
@@ -950,7 +950,7 @@ export const CarouselStudio: React.FC<CarouselStudioProps> = ({
                 className="w-full py-2 rounded-xl border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50"
               >
                 {isImprovingSlide ? (
-                  <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Improving with Nemotron...</>
+                  <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Improving Slide...</>
                 ) : (
                   <><Bot className="w-3.5 h-3.5" /> AI Improve This Slide</>
                 )}
