@@ -39,14 +39,30 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [verifying, setVerifying] = useState(false);
   const [verifyResult, setVerifyResult] = useState<{ success: boolean; profile?: { username?: string; name?: string }; error?: string } | null>(null);
 
-  const [storedUsername] = useState<string>(() => {
+  const [storedUsername, setStoredUsername] = useState<string>(() => {
     return localStorage.getItem('lana_ig_detected_username') || '';
   });
 
+  // Sync state whenever Settings modal opens
+  React.useEffect(() => {
+    if (isOpen) {
+      const current = getStoredInstagramCredentials();
+      if (current.accessToken) setManualToken(current.accessToken);
+      if (current.accountId) setManualAccountId(current.accountId);
+      if (brand.igHandle) setHandleInput(brand.igHandle);
+      const savedUser = localStorage.getItem('lana_ig_detected_username') || '';
+      if (savedUser) setStoredUsername(savedUser);
+    }
+  }, [isOpen, brand]);
+
   if (!isOpen) return null;
 
-  const hasToken = Boolean(manualToken.trim() || creds.accessToken);
-  const hasAccountId = Boolean(manualAccountId.trim() || creds.accountId);
+  const currentStored = getStoredInstagramCredentials();
+  const effectiveToken = manualToken.trim() || currentStored.accessToken;
+  const effectiveAccountId = manualAccountId.trim() || currentStored.accountId;
+
+  const hasToken = Boolean(effectiveToken);
+  const hasAccountId = Boolean(effectiveAccountId);
 
   const handleSaveHandle = () => {
     const formatted = handleInput.startsWith('@') ? handleInput.trim() : `@${handleInput.trim()}`;
@@ -55,6 +71,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       onUpdateBrand({
         ...brand,
         igHandle: formatted,
+        igConnected: Boolean(effectiveToken && effectiveAccountId),
+        igToken: effectiveToken,
+        igAccountId: effectiveAccountId,
       });
     }
     setSavedHandle(true);
@@ -62,17 +81,30 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   const handleSaveCredentials = () => {
-    saveInstagramCredentials({
-      accessToken: manualToken.trim(),
-      accountId: manualAccountId.trim(),
-    });
+    const current = getStoredInstagramCredentials();
+    const tokenToSave = (manualToken.trim() || current.accessToken || '').trim();
+    const idToSave = (manualAccountId.trim() || current.accountId || '').trim();
+    const formattedHandle = handleInput.startsWith('@') ? handleInput.trim() : (handleInput.trim() ? `@${handleInput.trim()}` : (brand.igHandle || '@lana.carousel'));
+
+    if (tokenToSave) {
+      saveInstagramCredentials({ accessToken: tokenToSave });
+      setManualToken(tokenToSave);
+    }
+    if (idToSave) {
+      saveInstagramCredentials({ accountId: idToSave });
+      setManualAccountId(idToSave);
+    }
+    localStorage.setItem('lana_ig_custom_handle', formattedHandle);
+
+    const isConnected = Boolean(tokenToSave && idToSave);
 
     if (onUpdateBrand) {
       onUpdateBrand({
         ...brand,
-        igConnected: Boolean(manualToken.trim() && manualAccountId.trim()),
-        igToken: manualToken.trim(),
-        igAccountId: manualAccountId.trim(),
+        igConnected: isConnected,
+        igHandle: formattedHandle,
+        igToken: tokenToSave,
+        igAccountId: idToSave,
       });
     }
 
@@ -81,7 +113,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   const handleAutoDetect = async () => {
-    const tokenToUse = manualToken.trim() || creds.accessToken;
+    const current = getStoredInstagramCredentials();
+    const tokenToUse = manualToken.trim() || current.accessToken;
     if (!tokenToUse) {
       setDetectResult({ error: 'Please connect with Meta first or paste an Access Token below.' });
       return;
@@ -100,14 +133,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           accounts: info.accounts,
         });
         setManualAccountId(info.accountId);
-        if (info.username && !brand.igHandle) {
-          setHandleInput(`@${info.username.replace('@', '')}`);
+        if (info.username) {
+          const formatted = `@${info.username.replace('@', '')}`;
+          setHandleInput(formatted);
+          localStorage.setItem('lana_ig_custom_handle', formatted);
+          localStorage.setItem('lana_ig_detected_username', info.username);
+          setStoredUsername(info.username);
         }
 
-        saveInstagramCredentials({ accountId: info.accountId });
-        if (info.username) {
-          localStorage.setItem('lana_ig_detected_username', info.username);
+        saveInstagramCredentials({ accountId: info.accountId, accessToken: tokenToUse });
+
+        if (onUpdateBrand) {
+          onUpdateBrand({
+            ...brand,
+            igConnected: true,
+            igHandle: info.username ? `@${info.username.replace('@', '')}` : brand.igHandle,
+            igToken: tokenToUse,
+            igAccountId: info.accountId,
+          });
         }
+
         setSavedCredentials(true);
         setTimeout(() => setSavedCredentials(false), 3000);
       } else {

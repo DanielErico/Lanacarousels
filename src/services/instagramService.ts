@@ -46,10 +46,10 @@ export function getStoredInstagramCredentials(): InstagramCredentials {
 }
 
 export function saveInstagramCredentials(creds: Partial<InstagramCredentials>) {
-  if (creds.appId !== undefined) localStorage.setItem(STORAGE_KEYS.APP_ID, creds.appId);
-  if (creds.appSecret !== undefined) localStorage.setItem(STORAGE_KEYS.APP_SECRET, creds.appSecret);
-  if (creds.accessToken !== undefined) localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, creds.accessToken);
-  if (creds.accountId !== undefined) localStorage.setItem(STORAGE_KEYS.ACCOUNT_ID, creds.accountId);
+  if (creds.appId !== undefined && creds.appId.trim() !== '') localStorage.setItem(STORAGE_KEYS.APP_ID, creds.appId.trim());
+  if (creds.appSecret !== undefined && creds.appSecret.trim() !== '') localStorage.setItem(STORAGE_KEYS.APP_SECRET, creds.appSecret.trim());
+  if (creds.accessToken !== undefined && creds.accessToken.trim() !== '') localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, creds.accessToken.trim());
+  if (creds.accountId !== undefined && creds.accountId.trim() !== '') localStorage.setItem(STORAGE_KEYS.ACCOUNT_ID, creds.accountId.trim());
 }
 
 /** Wipes all stored OAuth credentials — call before reconnecting to avoid stale token/ID mismatches. */
