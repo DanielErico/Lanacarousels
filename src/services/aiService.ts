@@ -26,11 +26,13 @@ export const NEMOTRON_MODELS: { id: NemotronModel; label: string; speed: string 
 const STORAGE_KEY_API = 'lana_nvidia_api_key';
 const STORAGE_KEY_MODEL = 'lana_nvidia_model';
 
-// Priority: localStorage (Settings UI) → .env → empty
+const DEFAULT_NVIDIA_KEY = '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';
+
+// Priority: localStorage (Settings UI) → .env → default working key
 export const getStoredApiKey = (): string =>
   localStorage.getItem(STORAGE_KEY_API) ||
   (import.meta.env.VITE_NVIDIA_API_KEY as string) ||
-  '';
+  DEFAULT_NVIDIA_KEY;
 
 export const setStoredApiKey = (key: string): void => localStorage.setItem(STORAGE_KEY_API, key);
 
@@ -63,12 +65,37 @@ async function callNemotron(
   maxTokens = 2048,
   temperature = 0.7,
 ): Promise<string> {
-  if (!apiKey) throw new Error('NVIDIA API key not configured. Please add it in Settings.');
+  const activeKey = apiKey || DEFAULT_NVIDIA_KEY;
 
+  // Tier 1: Call Vercel serverless backend endpoint (eliminates browser CORS restrictions)
+  try {
+    const serverlessRes = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages,
+        model,
+        apiKey: activeKey,
+        max_tokens: maxTokens,
+        temperature,
+      }),
+    });
+
+    if (serverlessRes.ok) {
+      const data: ApiResponse = await serverlessRes.json();
+      if (data.choices?.[0]?.message?.content) {
+        return data.choices[0].message.content;
+      }
+    }
+  } catch {
+    // Continue to Tier 2 if /api/generate is not reachable (e.g. static dev server)
+  }
+
+  // Tier 2: Direct NVIDIA NIM API call
   const response = await fetch(`${NVIDIA_BASE_URL}/chat/completions`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${apiKey}`,
+      'Authorization': `Bearer ${activeKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -514,7 +541,7 @@ Return JSON only:
   }
 }
 
-// ─── Smart Fallback Generator ──────────────────────────────────────────────────
+// ─── Smart Contextual Semantic Generator (Offline / Network Fallback) ─────────
 
 function generateFallbackCarousel(
   topic: string,
@@ -524,49 +551,169 @@ function generateFallbackCarousel(
   platformSpec: PlatformSpec,
   slideCount: number = 5,
 ): Partial<Carousel> {
-  const cleanTopic = topic.replace(/https?:\/\/[^\s]+/g, '').trim() || 'Business Growth Strategy';
-  const words = cleanTopic.split(/\s+/).filter(w => w.length > 2);
-  const mainSubject = words.slice(0, 4).join(' ').toUpperCase() || 'HIGH IMPACT STRATEGY';
-  const keyTerm1 = words[0] ? words[0].toUpperCase() : 'AUTOMATION';
-  const keyTerm2 = words[1] ? words[1].toUpperCase() : 'ENGAGEMENT';
-  const keyTerm3 = words[2] ? words[2].toUpperCase() : 'GROWTH';
+  const cleanTopic = topic.replace(/https?:\/\/[^\s]+/g, '').trim() || 'Achieving Long Term Success';
+  const lower = cleanTopic.toLowerCase();
 
-  const mockSlidesData: GeneratedSlideData[] = [
-    {
-      type: 'hook',
-      headline: cleanTopic.toUpperCase(),
-      subtext: `Swipe to discover 4 proven ${keyTerm1} tactics for ${brand.name}.`,
-    },
-    {
-      type: 'value',
-      headline: `01. OPTIMIZE FOR ${keyTerm1}`,
-      subtext: `Streamline your content pipeline by applying targeted ${keyTerm1.toLowerCase()} workflows.`,
-    },
-    {
-      type: 'value',
-      headline: `02. MAXIMIZE YOUR ${keyTerm2}`,
-      subtext: `Create scroll-stopping hooks and value-dense slides that keep readers engaged.`,
-    },
-    {
-      type: 'value',
-      headline: `03. SCALE ${keyTerm3} & DWEL TIME`,
-      subtext: `Structure your carousels for 99% readability to boost algorithm reach.`,
-    },
-    {
-      type: 'cta',
-      headline: 'SAVE THIS POST 🔖',
-      subtext: `Follow ${brand.igHandle || '@brand'} for more ${brand.industry} breakdowns!`,
-    },
-  ];
+  // Detect domain theme
+  let theme: 'mindset' | 'growth' | 'strategy' | 'execution' | 'general' = 'general';
+  if (lower.includes('give up') || lower.includes('giving up') || lower.includes('quit') || lower.includes('mindset') || lower.includes('discipline') || lower.includes('focus') || lower.includes('habit')) {
+    theme = 'mindset';
+  } else if (lower.includes('growth') || lower.includes('scale') || lower.includes('revenue') || lower.includes('sales') || lower.includes('client')) {
+    theme = 'growth';
+  } else if (lower.includes('strategy') || lower.includes('plan') || lower.includes('brand') || lower.includes('content') || lower.includes('social')) {
+    theme = 'strategy';
+  } else if (lower.includes('start') || lower.includes('launch') || lower.includes('build') || lower.includes('system')) {
+    theme = 'execution';
+  }
+
+  const themeSlides: Record<string, GeneratedSlideData[]> = {
+    mindset: [
+      {
+        type: 'hook',
+        headline: cleanTopic.toUpperCase(),
+        subtext: 'Why persistence always beats temporary motivation in the long run.',
+      },
+      {
+        type: 'value',
+        headline: 'THE REALITY OF THE DIP',
+        subtext: 'Every breakthrough is preceded by a period where nothing seems to work. That dip is where your competition quits.',
+      },
+      {
+        type: 'value',
+        headline: 'REFRAME FAILURE AS DATA',
+        subtext: 'A failed attempt is not a dead end — it is feedback. Adjust your strategy, not your ultimate ambition.',
+      },
+      {
+        type: 'value',
+        headline: 'COMPOUND EFFORT WINS',
+        subtext: '1% improvement daily creates 37x growth over a year. Small daily consistency always triumphs over sporadic intensity.',
+      },
+      {
+        type: 'cta',
+        headline: 'STAY IN THE GAME 🔖',
+        subtext: `Save this reminder for your hardest days. Follow ${brand.igHandle || '@brand'} for more daily fuel!`,
+      },
+    ],
+    growth: [
+      {
+        type: 'hook',
+        headline: cleanTopic.toUpperCase(),
+        subtext: `A proven framework to scale ${brand.industry} results faster with less friction.`,
+      },
+      {
+        type: 'value',
+        headline: 'IDENTIFY YOUR 80/20 LEVER',
+        subtext: '20% of your inputs drive 80% of your tangible revenue and reach. Double down on what already works.',
+      },
+      {
+        type: 'value',
+        headline: 'REMOVE SYSTEM BOTTLENECKS',
+        subtext: 'Growth is rarely a motivation issue; it is a workflow constraint. Automate and delegate repetitive friction.',
+      },
+      {
+        type: 'value',
+        headline: 'OPTIMIZE FOR RETENTION',
+        subtext: 'Acquisition gets attention, but retention builds enterprise value. Keep your core audience deeply engaged.',
+      },
+      {
+        type: 'cta',
+        headline: 'SCALE SMARTER TODAY 🔖',
+        subtext: `Save this post to your business board. Follow ${brand.igHandle || '@brand'} for weekly growth systems!`,
+      },
+    ],
+    strategy: [
+      {
+        type: 'hook',
+        headline: cleanTopic.toUpperCase(),
+        subtext: 'The blueprint top performers use to dominate their space without burning out.',
+      },
+      {
+        type: 'value',
+        headline: 'CLARITY PRECEDES SPEED',
+        subtext: 'Without a clear target, execution is just noisy hustle. Define your non-negotiable weekly milestones first.',
+      },
+      {
+        type: 'value',
+        headline: 'AUDIENCE-FIRST POSITIONING',
+        subtext: 'Speak directly to the exact pain point your dream client feels every morning before coffee.',
+      },
+      {
+        type: 'value',
+        headline: 'CONSISTENT DISTRIBUTION',
+        subtext: 'Great content unseen is zero leverage. Repurpose and distribute your core thesis across multiple channels.',
+      },
+      {
+        type: 'cta',
+        headline: 'BOOKMARK THIS STRATEGY 🔖',
+        subtext: `Save this carousel for your next planning sprint. Follow ${brand.igHandle || '@brand'} for high-impact playbooks!`,
+      },
+    ],
+    execution: [
+      {
+        type: 'hook',
+        headline: cleanTopic.toUpperCase(),
+        subtext: 'How to transition from overthinking ideas into relentless daily execution.',
+      },
+      {
+        type: 'value',
+        headline: 'START BEFORE YOU FEEL READY',
+        subtext: 'Perfectionism is procrastination in disguise. Ship the prototype and iterate based on real feedback.',
+      },
+      {
+        type: 'value',
+        headline: 'BUILD REPEATABLE HABITS',
+        subtext: 'You do not rise to the level of your goals; you fall to the level of your daily operational habits.',
+      },
+      {
+        type: 'value',
+        headline: 'MEASURE WHAT MATTERS',
+        subtext: 'Track leading indicators (actions taken) rather than lagging indicators (outcomes) to stay motivated.',
+      },
+      {
+        type: 'cta',
+        headline: 'TAKE ACTION TODAY 🚀',
+        subtext: `Save this checklist and implement Step 1 today. Follow ${brand.igHandle || '@brand'} for actionable frameworks!`,
+      },
+    ],
+    general: [
+      {
+        type: 'hook',
+        headline: cleanTopic.toUpperCase(),
+        subtext: 'A high-impact breakdown of the principles you need to know today.',
+      },
+      {
+        type: 'value',
+        headline: 'THE FOUNDATIONAL PILLAR',
+        subtext: 'Master the core fundamentals before chasing advanced tactics or shortcuts that rarely last.',
+      },
+      {
+        type: 'value',
+        headline: 'EXECUTE WITH INTENTION',
+        subtext: 'Eliminate low-value distractions and focus your prime energy on what moves the needle forward.',
+      },
+      {
+        type: 'value',
+        headline: 'ITERATE & REFINE',
+        subtext: 'Review weekly progress, double down on high-performing actions, and ruthlessly cut what stalls momentum.',
+      },
+      {
+        type: 'cta',
+        headline: 'SAVE FOR LATER 🔖',
+        subtext: `Bookmark this guide for easy reference. Follow ${brand.igHandle || '@brand'} for more insights!`,
+      },
+    ],
+  };
+
+  const selectedSlides = themeSlides[theme] || themeSlides.general;
 
   const generated: GeneratedCarouselData = {
     title: cleanTopic,
     hookType: 'bold_claim',
-    slides: mockSlidesData.slice(0, slideCount),
+    slides: selectedSlides.slice(0, slideCount),
     caption: {
-      text: `Looking to scale your ${brand.industry} content? Here is a breakdown of ${cleanTopic}. Swipe through and save this post!`,
-      hashtags: ['#ContentStrategy', `#${keyTerm1.replace(/[^A-Z]/g, '')}`, '#InstagramGrowth', '#LanaStudio', '#GrowthMindset'],
-      cta: 'Save this post for later 🔖',
+      text: `When it comes to "${cleanTopic}", most people stop right before their breakthrough. Here is a breakdown of why staying the course and refining your approach changes everything. What has been your biggest lesson so far?`,
+      hashtags: ['#GrowthMindset', '#ConsistencyIsKey', '#ContentStrategy', '#NeverGiveUp', '#BusinessGrowth', '#LanaStudio'],
+      cta: 'Save this post to revisit whenever you need clarity 🔖',
     },
   };
 
