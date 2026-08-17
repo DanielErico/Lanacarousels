@@ -181,7 +181,7 @@ export const CarouselStudio: React.FC<CarouselStudioProps> = ({
           const slideEl = hiddenContainer.children[i] as HTMLElement;
           if (slideEl) {
             const canvas = await html2canvas(slideEl, {
-              scale: 2,
+              scale: 3,
               useCORS: true,
               allowTaint: true,
               backgroundColor: null,
@@ -1260,8 +1260,8 @@ export const CarouselStudio: React.FC<CarouselStudioProps> = ({
             <div
               key={s.id}
               style={{
-                width: '1080px',
-                height: '1350px',
+                width: '360px',
+                height: currentCarousel.platformSpec === 'ig_1_1' ? '360px' : '450px',
                 position: 'relative',
                 overflow: 'hidden',
               }}
