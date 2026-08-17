@@ -158,10 +158,15 @@ create policy "Users can delete own slides"
 -- Authentication > URL Configuration > Site URL = http://localhost:5173
 -- Authentication > Email Templates > confirm signup (optional)
 
--- ── 6. SLIDES — image_url column (for Instagram publishing) ────
+-- ── 6. SLIDES & BRANDS COLUMNS ─────────────────────────────────
 -- Stores the public Supabase Storage URL after slide images are uploaded
 alter table public.slides
   add column if not exists image_url text;
+
+-- Stores credentials on brand records for automated background publishing
+alter table public.brands
+  add column if not exists ig_token text,
+  add column if not exists ig_account_id text;
 
 -- ── 7. SUPABASE STORAGE — carousel-images bucket ───────────────
 -- Run this block to create the public storage bucket Lana uses
@@ -171,24 +176,28 @@ values ('carousel-images', 'carousel-images', true)
 on conflict (id) do nothing;
 
 -- Allow authenticated users to upload to carousel-images
+drop policy if exists "Authenticated users can upload carousel images" on storage.objects;
 create policy "Authenticated users can upload carousel images"
   on storage.objects for insert
   to authenticated
   with check (bucket_id = 'carousel-images');
 
 -- Allow authenticated users to update (upsert) their own uploads
+drop policy if exists "Authenticated users can update carousel images" on storage.objects;
 create policy "Authenticated users can update carousel images"
   on storage.objects for update
   to authenticated
   using (bucket_id = 'carousel-images');
 
 -- Allow anyone to read public carousel images (required for Meta API to fetch them)
+drop policy if exists "Public can read carousel images" on storage.objects;
 create policy "Public can read carousel images"
   on storage.objects for select
   to public
   using (bucket_id = 'carousel-images');
 
 -- Allow authenticated users to delete their own uploads
+drop policy if exists "Authenticated users can delete carousel images" on storage.objects;
 create policy "Authenticated users can delete carousel images"
   on storage.objects for delete
   to authenticated
