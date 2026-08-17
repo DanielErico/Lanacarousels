@@ -16,120 +16,123 @@ const NavyOrangeDiagonal: React.FC<TemplateCanvasProps> = ({
 }) => {
   const isHook = slideIndex === 0;
   const slideLabel = `${String(slideIndex + 1).padStart(2, '0')}/${String(totalSlides).padStart(2, '0')}`;
-  const num = slideIndex; // 1-based for content slides
+  const num = slideIndex;
 
   return (
     <div style={{
       width: '100%', height: '100%', position: 'relative', overflow: 'hidden',
       background: isHook
-        ? 'linear-gradient(135deg, #0284C7 0%, #0369A1 60%, #075985 100%)'
-        : slideIndex === 1 ? '#0284C7'
-        : slideIndex === 2 ? '#0369A1'
-        : slideIndex === 3 ? '#075985'
+        ? 'linear-gradient(135deg, #0369A1 0%, #075985 60%, #0C4A6E 100%)'
         : '#075985',
-      fontFamily: "'Helvetica Neue', Arial, sans-serif",
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+      display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+      padding: '36px 32px', boxSizing: 'border-box',
     }}>
 
       {/* Diagonal Orange Bands */}
-      <div style={{
-        position: 'absolute', inset: 0, overflow: 'hidden',
-        opacity: isHook ? 1 : 1,
-      }}>
+      <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
         <div style={{
-          position: 'absolute',
-          width: '200%', height: '55%',
-          background: slideIndex <= 1 ? '#C85A1A' : slideIndex === 2 ? '#C85A1A' : '#8B3A20',
-          transform: 'rotate(-35deg)',
-          top: '-10%', right: '-30%',
-          transformOrigin: 'top right',
+          position: 'absolute', width: '220%', height: '50%',
+          background: '#C85A1A', transform: 'rotate(-32deg)',
+          top: '-12%', right: '-35%', transformOrigin: 'top right', opacity: 0.9,
         }} />
         <div style={{
-          position: 'absolute',
-          width: '200%', height: '25%',
-          background: slideIndex <= 1 ? '#A84510' : '#7A2E10',
-          transform: 'rotate(-35deg)',
-          top: '15%', right: '-30%',
-          transformOrigin: 'top right',
+          position: 'absolute', width: '220%', height: '22%',
+          background: '#E8691C', transform: 'rotate(-32deg)',
+          top: '12%', right: '-35%', transformOrigin: 'top right', opacity: 0.85,
         }} />
       </div>
 
-      {/* Slide counter - top right */}
+      {/* Header */}
       <div style={{
-        position: 'absolute', top: '5%', right: '6%',
-        color: 'rgba(255,255,255,0.75)', fontSize: '12px', letterSpacing: '1.5px',
-        fontWeight: 700, zIndex: 10,
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        zIndex: 10, position: 'relative',
       }}>
-        {slideLabel}
-      </div>
-
-      {isHook ? (
-        /* HOOK SLIDE */
         <div style={{
-          position: 'absolute', bottom: '15%', left: '8%', right: '8%', zIndex: 10,
+          fontSize: '13px', fontWeight: 800, color: '#FFFFFF',
+          letterSpacing: '1.5px', textTransform: 'uppercase',
         }}>
+          {brandName || 'YOUR BRAND'}
+        </div>
+        <div style={{
+          fontSize: '13px', color: 'rgba(255,255,255,0.8)',
+          fontWeight: 700, background: 'rgba(0,0,0,0.25)',
+          padding: '4px 10px', borderRadius: '12px', letterSpacing: '1px',
+        }}>
+          {slideLabel}
+        </div>
+      </div>
+
+      {/* Main Slide Content */}
+      {isHook ? (
+        <div style={{ zIndex: 10, position: 'relative', margin: 'auto 0' }}>
           <div style={{
-            fontSize: 'clamp(26px, 8vw, 36px)',
-            fontWeight: 900, lineHeight: 1.15,
-            textTransform: 'uppercase', letterSpacing: '-0.5px',
-            color: '#FFFFFF',
+            fontSize: '34px', fontWeight: 900, lineHeight: 1.2,
+            textTransform: 'uppercase', color: '#FFFFFF', letterSpacing: '-0.5px',
+            textShadow: '0 2px 10px rgba(0,0,0,0.3)',
           }}>
             {slide.headline.split(' ').map((word, i) => (
-              <span key={i} style={{ color: i % 3 === 1 ? '#E8691C' : '#FFFFFF' }}>
+              <span key={i} style={{ color: i % 3 === 1 ? '#FDBA74' : '#FFFFFF' }}>
                 {word}{' '}
               </span>
             ))}
           </div>
           <div style={{
-            marginTop: '16px', width: '60px', height: '4px',
-            background: '#E8691C', borderRadius: '2px',
+            marginTop: '20px', width: '70px', height: '5px',
+            background: '#E8691C', borderRadius: '3px',
           }} />
+          <div style={{
+            marginTop: '18px', fontSize: '16px', color: 'rgba(255,255,255,0.9)',
+            fontWeight: 500, lineHeight: 1.5,
+          }}>
+            Swipe to learn more →
+          </div>
         </div>
       ) : (
-        /* CONTENT SLIDES */
-        <div style={{ position: 'absolute', inset: 0, zIndex: 10, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '10% 8%' }}>
-          {/* Large ghost number */}
+        <div style={{ zIndex: 10, position: 'relative', margin: 'auto 0' }}>
+          {/* Number Pill */}
           <div style={{
-            position: 'absolute', top: '10%', left: '5%',
-            fontSize: 'clamp(90px, 28vw, 130px)',
-            fontWeight: 900, color: 'transparent',
-            WebkitTextStroke: '2px rgba(255,255,255,0.25)',
-            lineHeight: 1, fontFamily: 'Georgia, serif',
-            userSelect: 'none',
+            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            background: '#E8691C', color: '#FFFFFF',
+            padding: '6px 14px', borderRadius: '8px',
+            fontSize: '14px', fontWeight: 900, letterSpacing: '1px',
+            marginBottom: '16px',
           }}>
-            {num}
+            STEP {String(num).padStart(2, '0')}
           </div>
-          {/* Headline */}
-          <div style={{ marginTop: '22%', zIndex: 2 }}>
-            <div style={{
-              fontSize: 'clamp(20px, 6vw, 26px)',
-              fontWeight: 800, color: '#FFFFFF',
-              textTransform: 'uppercase', letterSpacing: '0.5px',
-              lineHeight: 1.2, marginBottom: '10px',
-            }}>
-              {slide.headline}
-            </div>
-            <div style={{
-              fontSize: 'clamp(13px, 3.8vw, 16px)',
-              color: 'rgba(255,255,255,0.9)', lineHeight: 1.6,
-              maxWidth: '92%',
-            }}>
-              {slide.subtext}
-            </div>
+
+          <div style={{
+            fontSize: '28px', fontWeight: 900, color: '#FFFFFF',
+            textTransform: 'uppercase', lineHeight: 1.2, letterSpacing: '-0.3px',
+            marginBottom: '16px',
+          }}>
+            {slide.headline}
+          </div>
+
+          <div style={{
+            fontSize: '18px', color: 'rgba(255,255,255,0.95)',
+            lineHeight: 1.6, background: 'rgba(0,0,0,0.2)',
+            padding: '18px 20px', borderRadius: '12px',
+            borderLeft: '4px solid #E8691C',
+          }}>
+            {slide.subtext}
           </div>
         </div>
       )}
 
-      {/* Footer - website */}
+      {/* Footer */}
       <div style={{
-        position: 'absolute', bottom: '4%', left: '8%', right: '8%',
-        zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        zIndex: 10, position: 'relative', borderTop: '1px solid rgba(255,255,255,0.15)',
+        paddingTop: '12px',
       }}>
         <div style={{
-          fontSize: '11px', color: 'rgba(255,255,255,0.6)',
-          letterSpacing: '1px', textTransform: 'lowercase', fontWeight: 600,
+          fontSize: '13px', color: 'rgba(255,255,255,0.7)',
+          letterSpacing: '0.5px', fontWeight: 600,
         }}>
           {websiteUrl}
         </div>
+        <div style={{ fontSize: '16px', color: '#FDBA74', fontWeight: 900 }}>››</div>
       </div>
     </div>
   );
@@ -140,132 +143,114 @@ const AgencyBlackBlueWave: React.FC<TemplateCanvasProps> = ({
   slide, slideIndex, totalSlides, brandName = 'AGENCY NAME', websiteUrl = 'www.yourwebsite.com'
 }) => {
   const isHook = slideIndex === 0;
-  const isCTA = slideIndex === totalSlides - 1;
-  const slideLabel = `0${slideIndex + 1}`;
+  const slideLabel = `${String(slideIndex + 1).padStart(2, '0')}/${String(totalSlides).padStart(2, '0')}`;
 
   return (
     <div style={{
       width: '100%', height: '100%', position: 'relative', overflow: 'hidden',
-      background: isHook ? '#0A0A0A' : '#FFFFFF',
-      fontFamily: "'Helvetica Neue', Arial, sans-serif",
+      background: isHook ? '#09090B' : '#FFFFFF',
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+      display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+      padding: '36px 32px', boxSizing: 'border-box',
     }}>
 
-      {/* Header: Agency Logo + Slide Number */}
+      {/* Header */}
       <div style={{
-        position: 'absolute', top: '5%', left: '7%', right: '7%',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        zIndex: 20,
+        zIndex: 20, position: 'relative',
       }}>
         <div style={{
-          fontSize: '12px', fontWeight: 800,
-          color: isHook ? '#FFFFFF' : '#000000',
+          fontSize: '14px', fontWeight: 900,
+          color: isHook ? '#FFFFFF' : '#0F172A',
           letterSpacing: '1.5px', textTransform: 'uppercase',
         }}>
-          <span style={{ opacity: 0.5 }}>{brandName || 'AGENCY'} </span>
-          <span style={{ color: '#0EA5E9' }}>LOGO</span>
+          <span>{brandName || 'AGENCY'} </span>
+          <span style={{ color: '#0284C7' }}>•</span>
         </div>
-        <div style={{ fontSize: '12px', color: isHook ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)', fontWeight: 700 }}>
+        <div style={{
+          fontSize: '13px',
+          color: isHook ? 'rgba(255,255,255,0.8)' : '#0F172A',
+          fontWeight: 700,
+          background: isHook ? 'rgba(255,255,255,0.1)' : '#F1F5F9',
+          padding: '4px 10px', borderRadius: '8px',
+        }}>
           {slideLabel}
         </div>
       </div>
 
+      {/* Content */}
       {isHook ? (
-        /* HOOK: Black slide */
-        <div style={{
-          position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-          justifyContent: 'center', padding: '16% 8% 20%',
-        }}>
+        <div style={{ zIndex: 10, position: 'relative', margin: 'auto 0' }}>
           <div style={{
-            fontSize: 'clamp(28px, 8.5vw, 36px)',
-            fontWeight: 900, color: '#FFFFFF',
-            textTransform: 'uppercase', lineHeight: 1.1, letterSpacing: '-0.5px',
+            fontSize: '36px', fontWeight: 900, color: '#FFFFFF',
+            textTransform: 'uppercase', lineHeight: 1.15, letterSpacing: '-0.5px',
           }}>
-            {slide.headline || 'BUSINESS SOLUTION AGENCY'}
+            {slide.headline}
           </div>
-          <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ marginTop: '24px' }}>
             <div style={{
-              background: '#0EA5E9', color: '#FFFFFF',
-              padding: '7px 16px', fontSize: '11px',
+              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              background: '#0284C7', color: '#FFFFFF',
+              padding: '10px 20px', fontSize: '13px',
               fontWeight: 800, letterSpacing: '1px',
-              textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px',
-              borderRadius: '4px',
+              textTransform: 'uppercase', borderRadius: '8px',
             }}>
-              SWIPE TO LEARN <span style={{ fontSize: '13px' }}>›</span>
+              SWIPE TO READ <span style={{ fontSize: '16px' }}>›</span>
             </div>
-          </div>
-          {/* Quote at bottom */}
-          <div style={{
-            position: 'absolute', bottom: '10%', left: '8%',
-            fontSize: '11px', color: 'rgba(255,255,255,0.6)',
-            fontStyle: 'italic', maxWidth: '75%',
-          }}>
-            "Action Beats Inaction Every Time"
           </div>
         </div>
       ) : (
-        /* CONTENT SLIDES: White with blue wave */
-        <div style={{
-          position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-          padding: '16% 8% 0', justifyContent: 'center',
-        }}>
-          {/* Blue dots accent */}
-          <div style={{ display: 'flex', gap: '4px', marginBottom: '12px' }}>
-            {[0,1].map(i => (
-              <div key={i} style={{ width: '8px', height: '8px', background: '#0EA5E9', borderRadius: '2px' }} />
-            ))}
+        <div style={{ zIndex: 10, position: 'relative', margin: 'auto 0' }}>
+          {/* Blue Step Badge */}
+          <div style={{
+            display: 'inline-block', background: '#E0F2FE', color: '#0284C7',
+            padding: '6px 12px', borderRadius: '6px',
+            fontSize: '13px', fontWeight: 800, letterSpacing: '1px',
+            marginBottom: '16px',
+          }}>
+            INSIGHT #{slideIndex}
           </div>
 
-          {/* Headline */}
           <div style={{
-            fontSize: 'clamp(22px, 6.5vw, 28px)',
-            fontWeight: 900, color: '#0EA5E9',
-            textTransform: 'uppercase', lineHeight: 1.15,
-            letterSpacing: '-0.3px', marginBottom: '12px',
+            fontSize: '28px', fontWeight: 900, color: '#0284C7',
+            textTransform: 'uppercase', lineHeight: 1.2,
+            letterSpacing: '-0.3px', marginBottom: '16px',
           }}>
             {slide.headline}
           </div>
 
-          {/* Body text */}
           <div style={{
-            fontSize: 'clamp(14px, 4vw, 16px)',
-            color: '#222222', lineHeight: 1.6, maxWidth: '92%',
+            fontSize: '19px', color: '#1E293B', lineHeight: 1.65,
+            background: '#F8FAFC', padding: '20px 22px', borderRadius: '12px',
+            border: '1px solid #E2E8F0',
           }}>
             {slide.subtext}
           </div>
-
-          {/* Double arrow >> */}
-          <div style={{
-            position: 'absolute', bottom: '18%', right: '8%',
-            fontSize: '18px', color: '#0EA5E9', fontWeight: 900,
-          }}>
-            ›› 
-          </div>
-
-          {/* Black wave blob at bottom */}
-          <svg viewBox="0 0 200 80" style={{
-            position: 'absolute', bottom: 0, left: 0, right: 0,
-            width: '100%', height: '25%',
-          }}>
-            <path d="M0,80 L0,40 Q50,5 100,25 Q150,45 200,10 L200,80 Z" fill="#0A0A0A" />
-          </svg>
-
-          {/* Footer text on wave */}
-          <div style={{
-            position: 'absolute', bottom: '4%', left: '8%',
-            fontSize: '11px', color: 'rgba(255,255,255,0.7)',
-            letterSpacing: '0.5px', zIndex: 15, fontWeight: 600,
-          }}>
-            {websiteUrl}
-          </div>
         </div>
       )}
+
+      {/* Footer */}
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        zIndex: 15, position: 'relative', borderTop: `1px solid ${isHook ? 'rgba(255,255,255,0.15)' : '#E2E8F0'}`,
+        paddingTop: '12px',
+      }}>
+        <div style={{
+          fontSize: '13px',
+          color: isHook ? 'rgba(255,255,255,0.7)' : '#64748B',
+          letterSpacing: '0.5px', fontWeight: 600,
+        }}>
+          {websiteUrl}
+        </div>
+        <div style={{ fontSize: '16px', color: '#0284C7', fontWeight: 900 }}>››</div>
+      </div>
     </div>
   );
 };
 
 // ─── TEMPLATE 3: AI Dark Tech Purple ─────────────────────────────────────────
 const AiDarkTechPurple: React.FC<TemplateCanvasProps> = ({
-  slide, slideIndex, totalSlides, brandName = 'AGENCY LOGO', websiteUrl = '@lana.carousel'
+  slide, slideIndex, totalSlides, brandName = 'AI AGENCY', websiteUrl = '@lana.carousel'
 }) => {
   const isHook = slideIndex === 0;
   const slideLabel = `${String(slideIndex + 1).padStart(2, '0')}/${String(totalSlides).padStart(2, '0')}`;
@@ -274,127 +259,101 @@ const AiDarkTechPurple: React.FC<TemplateCanvasProps> = ({
   return (
     <div style={{
       width: '100%', height: '100%', position: 'relative', overflow: 'hidden',
-      background: isHook ? '#0B0B2A' : '#EDE8F8',
-      fontFamily: "'Helvetica Neue', Arial, sans-serif",
+      background: isHook
+        ? 'linear-gradient(145deg, #0B0B2A 0%, #151545 100%)'
+        : '#F5F3FF',
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+      display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+      padding: '36px 32px', boxSizing: 'border-box',
     }}>
-
-      {/* Circuit / grid pattern for hook slide */}
-      {isHook && (
-        <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', opacity: 0.15 }}>
-          <svg viewBox="0 0 200 200" style={{ width: '100%', height: '100%' }}>
-            <circle cx="100" cy="100" r="70" stroke="#7B7BFF" strokeWidth="0.5" fill="none" />
-            <circle cx="100" cy="100" r="55" stroke="#7B7BFF" strokeWidth="0.5" fill="none" />
-            <circle cx="100" cy="100" r="40" stroke="#7B7BFF" strokeWidth="0.5" fill="none" />
-            <line x1="0" y1="100" x2="200" y2="100" stroke="#7B7BFF" strokeWidth="0.3" />
-            <line x1="100" y1="0" x2="100" y2="200" stroke="#7B7BFF" strokeWidth="0.3" />
-            {Array.from({ length: 8 }).map((_, r) =>
-              Array.from({ length: 8 }).map((_, c) => (
-                <circle key={`${r}-${c}`} cx={c * 30 - 10} cy={r * 30 - 10} r="1" fill="#7B7BFF" />
-              ))
-            )}
-          </svg>
-        </div>
-      )}
 
       {/* Header */}
       <div style={{
-        position: 'absolute', top: '5%', left: '7%', right: '7%',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        zIndex: 20,
+        zIndex: 20, position: 'relative',
       }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-          <div style={{
-            fontSize: '12px', fontWeight: 800, letterSpacing: '1.5px',
-            textTransform: 'uppercase',
-            color: isHook ? '#FFFFFF' : '#0B0B2A',
-          }}>
-            {brandName || 'AGENCY LOGO'}
-          </div>
-          <div style={{ fontSize: '10px', color: isHook ? 'rgba(255,255,255,0.5)' : 'rgba(11,11,42,0.5)', fontWeight: 600 }}>
-            {websiteUrl || '@brand'}
-          </div>
+        <div style={{
+          fontSize: '13px', fontWeight: 900, letterSpacing: '1.5px',
+          textTransform: 'uppercase',
+          color: isHook ? '#FFFFFF' : '#4C1D95',
+        }}>
+          {brandName || 'AI AGENCY'}
         </div>
         <div style={{
-          fontSize: '12px', color: isHook ? 'rgba(255,255,255,0.6)' : 'rgba(11,11,42,0.6)',
+          fontSize: '13px',
+          color: isHook ? 'rgba(255,255,255,0.8)' : '#5B21B6',
           fontWeight: 700,
+          background: isHook ? 'rgba(255,255,255,0.1)' : '#EDE9FE',
+          padding: '4px 10px', borderRadius: '8px',
         }}>
           {slideLabel}
         </div>
       </div>
 
-      {/* Dot grid decoration */}
-      <div style={{
-        position: 'absolute', bottom: '16%', left: '6%',
-        display: 'grid', gridTemplateColumns: 'repeat(4,8px)', gap: '4px',
-        opacity: 0.5,
-      }}>
-        {Array.from({ length: 12 }).map((_, i) => (
-          <div key={i} style={{
-            width: '4px', height: '4px', borderRadius: '50%',
-            background: isHook ? '#FFFFFF' : '#0B0B2A',
-          }} />
-        ))}
-      </div>
-
+      {/* Main Content */}
       {isHook ? (
-        /* HOOK: Dark navy */
-        <div style={{
-          position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-          justifyContent: 'center', padding: '18% 8%',
-        }}>
+        <div style={{ zIndex: 10, position: 'relative', margin: 'auto 0' }}>
           <div style={{
-            fontSize: 'clamp(28px, 8.5vw, 36px)',
-            fontWeight: 900, color: '#FFFFFF',
-            textTransform: 'uppercase', lineHeight: 1.1, letterSpacing: '-0.5px',
+            fontSize: '34px', fontWeight: 900, color: '#FFFFFF',
+            textTransform: 'uppercase', lineHeight: 1.18, letterSpacing: '-0.5px',
           }}>
-            {slide.headline || 'FUTURE BUSINESS WITH ARTIFICIAL INTELLIGENCE'}
-          </div>
-          {/* >>> arrows */}
-          <div style={{
-            position: 'absolute', bottom: '10%', left: '7%',
-            fontSize: '20px', color: 'rgba(255,255,255,0.7)', letterSpacing: '-1px', fontWeight: 900,
-          }}>
-            {'>>>'}
-          </div>
-        </div>
-      ) : (
-        /* CONTENT SLIDES: Light purple */
-        <div style={{
-          position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-          padding: '16% 8%', justifyContent: 'center',
-        }}>
-          <div style={{
-            fontSize: 'clamp(22px, 6.5vw, 28px)',
-            fontWeight: 900, color: '#0B0B2A',
-            textTransform: 'uppercase', lineHeight: 1.15, letterSpacing: '-0.3px',
-          }}>
-            <span style={{ color: '#6366F1' }}>{num}: </span>
             {slide.headline}
           </div>
           <div style={{
-            marginTop: '14px', fontSize: 'clamp(14px, 4vw, 16px)',
-            color: '#22223B', lineHeight: 1.6, maxWidth: '92%',
+            marginTop: '20px', display: 'inline-flex', alignItems: 'center', gap: '8px',
+            background: 'linear-gradient(90deg, #6366F1, #8B5CF6)',
+            color: '#FFFFFF', padding: '10px 18px', borderRadius: '8px',
+            fontSize: '14px', fontWeight: 800,
+          }}>
+            SWIPE TO EXPLORE ❯❯
+          </div>
+        </div>
+      ) : (
+        <div style={{ zIndex: 10, position: 'relative', margin: 'auto 0' }}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            background: '#6366F1', color: '#FFFFFF',
+            padding: '6px 12px', borderRadius: '6px',
+            fontSize: '13px', fontWeight: 800, letterSpacing: '1px',
+            marginBottom: '16px',
+          }}>
+            POINT {num}
+          </div>
+
+          <div style={{
+            fontSize: '28px', fontWeight: 900, color: '#1E1B4B',
+            textTransform: 'uppercase', lineHeight: 1.2, letterSpacing: '-0.3px',
+            marginBottom: '16px',
+          }}>
+            {slide.headline}
+          </div>
+
+          <div style={{
+            fontSize: '19px', color: '#312E81', lineHeight: 1.65,
+            background: '#FFFFFF', padding: '20px 22px', borderRadius: '14px',
+            boxShadow: '0 4px 20px rgba(99, 102, 241, 0.08)',
+            border: '1px solid #E0E7FF',
           }}>
             {slide.subtext}
-          </div>
-          {/* <<< arrows at bottom */}
-          <div style={{
-            position: 'absolute', bottom: '8%', right: '7%',
-            fontSize: '16px', color: 'rgba(11,11,42,0.6)', letterSpacing: '-1px', fontWeight: 900,
-          }}>
-            {'<<<'}
           </div>
         </div>
       )}
 
       {/* Footer */}
       <div style={{
-        position: 'absolute', bottom: '4%', left: '8%',
-        fontSize: '11px',
-        color: isHook ? 'rgba(255,255,255,0.6)' : 'rgba(11,11,42,0.6)',
-        letterSpacing: '0.5px', zIndex: 10, fontWeight: 600,
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        zIndex: 10, position: 'relative',
+        borderTop: `1px solid ${isHook ? 'rgba(255,255,255,0.15)' : '#DDD6FE'}`,
+        paddingTop: '12px',
       }}>
-        {websiteUrl}
+        <div style={{
+          fontSize: '13px',
+          color: isHook ? 'rgba(255,255,255,0.7)' : '#6D28D9',
+          letterSpacing: '0.5px', fontWeight: 600,
+        }}>
+          {websiteUrl}
+        </div>
+        <div style={{ fontSize: '15px', color: isHook ? '#A5B4FC' : '#6366F1', fontWeight: 900 }}>❯❯</div>
       </div>
     </div>
   );
@@ -402,7 +361,107 @@ const AiDarkTechPurple: React.FC<TemplateCanvasProps> = ({
 
 // ─── TEMPLATE 4: Dark Navy Blue Square Frame ──────────────────────────────────
 const DarkNavyBlueFrame: React.FC<TemplateCanvasProps> = ({
-  slide, slideIndex, totalSlides, brandName = 'COMPANY LOGO', websiteUrl = 'your website goes here'
+  slide, slideIndex, totalSlides, brandName = 'COMPANY LOGO', websiteUrl = 'yourwebsite.com'
+}) => {
+  const isHook = slideIndex === 0;
+  const slideLabel = `${String(slideIndex + 1).padStart(2, '0')}/${String(totalSlides).padStart(2, '0')}`;
+  const num = slideIndex;
+
+  return (
+    <div style={{
+      width: '100%', height: '100%', position: 'relative', overflow: 'hidden',
+      background: 'linear-gradient(160deg, #0284C7 0%, #0369A1 50%, #075985 100%)',
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+      display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+      padding: '36px 32px', boxSizing: 'border-box',
+    }}>
+
+      {/* Header */}
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        zIndex: 20, position: 'relative',
+      }}>
+        <div style={{
+          fontSize: '13px', fontWeight: 900, color: '#FFFFFF',
+          letterSpacing: '1.5px', textTransform: 'uppercase',
+        }}>
+          {brandName || 'COMPANY LOGO'}
+        </div>
+        <div style={{
+          fontSize: '13px', color: '#E0F2FE',
+          fontWeight: 700, background: 'rgba(0,0,0,0.25)',
+          padding: '4px 10px', borderRadius: '8px',
+        }}>
+          {slideLabel}
+        </div>
+      </div>
+
+      {/* Content */}
+      {isHook ? (
+        <div style={{ zIndex: 10, position: 'relative', margin: 'auto 0' }}>
+          <div style={{
+            fontSize: '35px', fontWeight: 900, color: '#FFFFFF',
+            textTransform: 'uppercase', lineHeight: 1.18, letterSpacing: '-0.5px',
+          }}>
+            {slide.headline.split(' ').map((word, i) => (
+              <span key={i} style={{ color: i % 3 === 1 ? '#38BDF8' : '#FFFFFF' }}>
+                {word}{' '}
+              </span>
+            ))}
+          </div>
+          <div style={{ marginTop: '20px', width: '80px', height: '4px', background: '#38BDF8', borderRadius: '2px' }} />
+          <div style={{ marginTop: '16px', fontSize: '15px', color: '#E0F2FE', fontWeight: 600 }}>
+            Swipe to see all steps →
+          </div>
+        </div>
+      ) : (
+        <div style={{ zIndex: 10, position: 'relative', margin: 'auto 0' }}>
+          <div style={{
+            fontSize: '36px', fontWeight: 900, color: '#38BDF8',
+            lineHeight: 1, marginBottom: '12px',
+          }}>
+            #{num}
+          </div>
+
+          <div style={{
+            fontSize: '28px', fontWeight: 900, color: '#FFFFFF',
+            textTransform: 'uppercase', lineHeight: 1.2,
+            marginBottom: '16px',
+          }}>
+            {slide.headline}
+          </div>
+
+          <div style={{
+            fontSize: '19px', color: '#F0F9FF', lineHeight: 1.65,
+            background: 'rgba(0,0,0,0.25)', padding: '20px 22px', borderRadius: '12px',
+            borderLeft: '4px solid #38BDF8',
+          }}>
+            {slide.subtext}
+          </div>
+        </div>
+      )}
+
+      {/* Footer */}
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        zIndex: 10, position: 'relative', borderTop: '1px solid rgba(255,255,255,0.2)',
+        paddingTop: '12px',
+      }}>
+        <div style={{
+          fontSize: '13px', color: 'rgba(255,255,255,0.75)',
+          letterSpacing: '0.5px', fontWeight: 600,
+        }}>
+          {websiteUrl}
+        </div>
+        <div style={{ fontSize: '18px', color: '#38BDF8', fontWeight: 900 }}>→</div>
+      </div>
+    </div>
+  );
+};
+
+// ─── TEMPLATE 5: Seamless Yellow Bold ─────────────────────────────────────────
+const SeamlessYellowBold: React.FC<TemplateCanvasProps> = ({
+  slide, slideIndex, totalSlides, brandName = 'LANA', websiteUrl = '@lana.carousel'
 }) => {
   const isHook = slideIndex === 0;
   const isCTA = slideIndex === totalSlides - 1;
@@ -412,220 +471,124 @@ const DarkNavyBlueFrame: React.FC<TemplateCanvasProps> = ({
   return (
     <div style={{
       width: '100%', height: '100%', position: 'relative', overflow: 'hidden',
-      background: '#0369A1',
-      fontFamily: "'Helvetica Neue', Arial, sans-serif",
+      background: isHook ? '#FFFFFF' : isCTA ? '#111827' : '#FACC15',
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+      display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+      padding: '36px 32px', boxSizing: 'border-box',
     }}>
 
       {/* Header */}
       <div style={{
-        position: 'absolute', top: '5%', left: '7%', right: '7%',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        zIndex: 20,
+        zIndex: 10, position: 'relative',
       }}>
         <div style={{
-          fontSize: '12px', fontWeight: 800, color: 'rgba(255,255,255,0.85)',
+          fontSize: '14px', fontWeight: 900,
+          color: isCTA ? '#FACC15' : '#000000',
           letterSpacing: '1.5px', textTransform: 'uppercase',
         }}>
-          {brandName || 'COMPANY LOGO'}
+          {brandName || 'BRAND'}
         </div>
-        <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', fontWeight: 700 }}>
+        <div style={{
+          fontSize: '13px',
+          color: isCTA ? '#FACC15' : '#000000',
+          fontWeight: 800,
+          background: isCTA ? 'rgba(250,204,21,0.15)' : 'rgba(0,0,0,0.08)',
+          padding: '4px 10px', borderRadius: '8px',
+        }}>
           {slideLabel}
         </div>
       </div>
 
+      {/* Main Content Area */}
       {isHook ? (
-        /* HOOK SLIDE */
-        <div style={{
-          position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-          justifyContent: 'center', padding: '18% 8%',
-        }}>
+        <div style={{ zIndex: 10, position: 'relative', margin: 'auto 0' }}>
           <div style={{
-            fontSize: 'clamp(28px, 8.5vw, 36px)',
-            fontWeight: 900, color: '#FFFFFF',
-            textTransform: 'uppercase', lineHeight: 1.1, letterSpacing: '-0.5px',
+            fontSize: '36px', fontWeight: 900, color: '#000000',
+            lineHeight: 1.15, textTransform: 'uppercase', letterSpacing: '-0.5px',
           }}>
-            {slide.headline.split(' ').map((word, i) => (
-              <span key={i} style={{ color: i % 3 === 1 ? '#38BDF8' : '#FFFFFF' }}>
-                {word}{' '}
-              </span>
-            ))}
+            {slide.headline}
           </div>
-          {/* Blue underline */}
-          <div style={{ marginTop: '16px', width: '100%', height: '3px', background: '#38BDF8', borderRadius: '2px' }} />
-          {/* Arrow right */}
+          <div style={{ marginTop: '22px' }}>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              background: '#000000', color: '#FACC15',
+              padding: '10px 18px', borderRadius: '8px',
+              fontSize: '13px', fontWeight: 900, letterSpacing: '1px',
+            }}>
+              SWIPE TO READ ▷▷▷
+            </div>
+          </div>
+        </div>
+      ) : isCTA ? (
+        <div style={{ zIndex: 10, position: 'relative', margin: 'auto 0', textAlign: 'center' }}>
           <div style={{
-            position: 'absolute', bottom: '10%', right: '8%',
-            fontSize: '22px', color: '#FFFFFF', fontWeight: 900,
-          }}>→</div>
+            fontSize: '44px', fontWeight: 900, color: '#FACC15',
+            lineHeight: 1.1, textTransform: 'uppercase', marginBottom: '16px',
+          }}>
+            Save & Share
+          </div>
+          <div style={{
+            fontSize: '19px', color: '#E5E7EB', lineHeight: 1.6,
+            maxWidth: '90%', margin: '0 auto',
+          }}>
+            {slide.subtext || 'Follow for more actionable insights and daily growth strategies.'}
+          </div>
         </div>
       ) : (
-        /* CONTENT SLIDES */
-        <div style={{
-          position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-          padding: '16% 8%', justifyContent: 'center',
-        }}>
-          <div style={{ marginLeft: '4%', zIndex: 5 }}>
-            <div style={{
-              fontSize: 'clamp(28px, 8vw, 42px)',
-              fontWeight: 900, color: '#38BDF8',
-              lineHeight: 1, marginBottom: '8px',
-            }}>
-              #{num}
-            </div>
-            <div style={{
-              fontSize: 'clamp(20px, 6vw, 26px)',
-              fontWeight: 800, color: '#FFFFFF',
-              textTransform: 'uppercase', lineHeight: 1.2,
-              marginBottom: '12px', maxWidth: '92%',
-            }}>
-              {slide.headline}
-            </div>
-            <div style={{
-              fontSize: 'clamp(14px, 4vw, 16px)',
-              color: 'rgba(255,255,255,0.85)', lineHeight: 1.6,
-              maxWidth: '92%',
-            }}>
-              {slide.subtext}
-            </div>
+        <div style={{ zIndex: 10, position: 'relative', margin: 'auto 0' }}>
+          {/* Big Number Badge */}
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            background: '#000000', color: '#FACC15',
+            padding: '6px 14px', borderRadius: '8px',
+            fontSize: '16px', fontWeight: 900, letterSpacing: '1px',
+            marginBottom: '16px',
+          }}>
+            #{num}
+          </div>
+
+          <div style={{
+            fontSize: '30px', fontWeight: 900, color: '#000000',
+            lineHeight: 1.18, textTransform: 'uppercase',
+            letterSpacing: '-0.5px', marginBottom: '16px',
+          }}>
+            {slide.headline}
+          </div>
+
+          <div style={{
+            fontSize: '19px', color: '#000000', lineHeight: 1.65,
+            fontWeight: 500, background: 'rgba(255,255,255,0.75)',
+            padding: '20px 22px', borderRadius: '14px',
+            border: '2px solid rgba(0,0,0,0.1)',
+          }}>
+            {slide.subtext}
           </div>
         </div>
       )}
 
       {/* Footer */}
       <div style={{
-        position: 'absolute', bottom: '4%', left: '8%', right: '8%',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        zIndex: 10,
+        zIndex: 10, position: 'relative',
+        borderTop: `1px solid ${isCTA ? 'rgba(250,204,21,0.2)' : 'rgba(0,0,0,0.15)'}`,
+        paddingTop: '12px',
       }}>
         <div style={{
-          fontSize: '11px', color: 'rgba(255,255,255,0.6)',
-          letterSpacing: '0.5px', fontWeight: 600,
+          fontSize: '13px',
+          color: isCTA ? '#FACC15' : '#000000',
+          letterSpacing: '0.5px', fontWeight: 700,
         }}>
           {websiteUrl}
         </div>
-        {!isHook && (
-          <div style={{ fontSize: '18px', color: '#FFFFFF', opacity: 0.8, fontWeight: 900 }}>→</div>
-        )}
+        <div style={{
+          fontSize: '16px',
+          color: isCTA ? '#FACC15' : '#000000',
+          fontWeight: 900,
+        }}>
+          {isCTA ? '★' : '▷▷▷'}
+        </div>
       </div>
-    </div>
-  );
-};
-
-// ─── TEMPLATE 5: Seamless Yellow Bold ─────────────────────────────────────────
-const SeamlessYellowBold: React.FC<TemplateCanvasProps> = ({
-  slide, slideIndex, totalSlides, brandName = '', websiteUrl = ''
-}) => {
-  const isHook = slideIndex === 0;
-  const isCTA = slideIndex === totalSlides - 1;
-  const num = slideIndex;
-
-  return (
-    <div style={{
-      width: '100%', height: '100%', position: 'relative', overflow: 'hidden',
-      background: isHook || isCTA ? '#FFFFFF' : '#F5D300',
-      fontFamily: "'Helvetica Neue', Arial, sans-serif",
-    }}>
-
-      {isHook ? (
-        /* HOOK: White side */
-        <div style={{
-          position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-          padding: '14% 8%', justifyContent: 'center',
-        }}>
-          <div style={{
-            position: 'absolute', right: 0, top: 0, bottom: 0, width: '25%',
-            background: '#F5D300',
-          }} />
-          <svg style={{ position: 'absolute', right: '23%', top: 0, height: '100%', width: '24px' }} viewBox="0 0 24 200" preserveAspectRatio="none">
-            <path d="M12,0 L20,20 L4,40 L20,60 L4,80 L20,100 L4,120 L20,140 L4,160 L20,180 L12,200" stroke="#000" strokeWidth="1.5" fill="none" />
-          </svg>
-
-          {/* Headline */}
-          <div style={{ maxWidth: '68%', zIndex: 10 }}>
-            <div style={{
-              fontSize: 'clamp(28px, 8.5vw, 36px)',
-              fontWeight: 900, color: '#000000', lineHeight: 1.1,
-            }}>
-              {slide.headline}
-            </div>
-          </div>
-
-          <div style={{
-            position: 'absolute', bottom: '8%', left: '8%',
-            fontSize: '18px', color: '#000', letterSpacing: '-2px', fontWeight: 900,
-          }}>▷▷▷</div>
-        </div>
-      ) : isCTA ? (
-        /* THANK YOU slide */
-        <div style={{
-          position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center', padding: '12%',
-        }}>
-          <div style={{
-            position: 'absolute', left: 0, top: 0, bottom: 0, width: '25%',
-            background: '#F5D300',
-          }} />
-          <svg style={{ position: 'absolute', left: '23%', top: 0, height: '100%', width: '24px' }} viewBox="0 0 24 200" preserveAspectRatio="none">
-            <path d="M12,0 L20,20 L4,40 L20,60 L4,80 L20,100 L4,120 L20,140 L4,160 L20,180 L12,200" stroke="#000" strokeWidth="1.5" fill="none" />
-          </svg>
-
-          <div style={{ marginLeft: '15%' }}>
-            <div style={{
-              fontSize: 'clamp(32px, 10vw, 44px)',
-              fontWeight: 900, color: '#000000', textAlign: 'center', lineHeight: 1.1,
-            }}>
-              Thank<br />You
-            </div>
-          </div>
-
-          <div style={{
-            position: 'absolute', bottom: '8%', right: '8%',
-            fontSize: '18px', color: '#000', letterSpacing: '-2px', fontWeight: 900,
-          }}>◁◁◁</div>
-        </div>
-      ) : (
-        /* CONTENT SLIDES: Yellow */
-        <div style={{
-          position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-          padding: '14% 10%', background: '#F5D300', justifyContent: 'center',
-        }}>
-          <svg style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: '20px' }} viewBox="0 0 24 200" preserveAspectRatio="none">
-            <path d="M12,0 L20,20 L4,40 L20,60 L4,80 L20,100 L4,120 L20,140 L4,160 L20,180 L12,200" stroke="#000" strokeWidth="1.5" fill="none" />
-          </svg>
-          <svg style={{ position: 'absolute', right: 0, top: 0, height: '100%', width: '20px' }} viewBox="0 0 24 200" preserveAspectRatio="none">
-            <path d="M12,0 L20,20 L4,40 L20,60 L4,80 L20,100 L4,120 L20,140 L4,160 L20,180 L12,200" stroke="#000" strokeWidth="1.5" fill="none" />
-          </svg>
-
-          {/* Number */}
-          <div style={{
-            fontSize: 'clamp(36px, 10vw, 48px)',
-            fontWeight: 900, color: '#000000', lineHeight: 1,
-            display: 'inline-block',
-            alignSelf: 'flex-start', marginLeft: '6%', marginBottom: '6px',
-          }}>
-            #{num}
-          </div>
-
-          {/* Headline */}
-          <div style={{
-            marginLeft: '6%',
-            fontSize: 'clamp(22px, 6.5vw, 28px)',
-            fontWeight: 900, color: '#000000', lineHeight: 1.15,
-            textTransform: 'uppercase', marginBottom: '10px',
-          }}>
-            {slide.headline}
-          </div>
-
-          {/* Body text */}
-          <div style={{
-            marginLeft: '6%',
-            fontSize: 'clamp(14px, 4vw, 16px)',
-            color: '#111', lineHeight: 1.6, maxWidth: '90%',
-          }}>
-            {slide.subtext}
-          </div>
-        </div>
-      )}
     </div>
   );
 };
