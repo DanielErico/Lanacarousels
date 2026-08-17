@@ -994,10 +994,8 @@ export const CarouselStudio: React.FC<CarouselStudioProps> = ({
                 Edit Slide #{activeSlideIndex + 1} ({activeSlide.type.toUpperCase()})
               </h3>
               <div className="flex items-center space-x-2">
-                <span className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold ${
-                  activeSlideWords <= 35 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
-                }`}>
-                  {activeSlideWords} words (Max 35)
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-100 text-slate-700">
+                  {activeSlideWords} words
                 </span>
                 <button
                   onClick={() => {
@@ -1007,7 +1005,7 @@ export const CarouselStudio: React.FC<CarouselStudioProps> = ({
                       type: 'value',
                       badge: `0${currentCarousel.slides.length + 1}`,
                       headline: 'Additional Value Point',
-                      subtext: 'Add your concise value proposition here.',
+                      subtext: 'Add your detailed explanation and actionable steps here.',
                       bgGradient: currentCarousel.slides[0].bgGradient,
                       textColor: '#FFFFFF',
                       accentColor: currentCarousel.slides[0].accentColor,
@@ -1047,12 +1045,12 @@ export const CarouselStudio: React.FC<CarouselStudioProps> = ({
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase">Body Subtext (Max 35 Words)</label>
+                <label className="text-[11px] font-bold text-slate-500 uppercase">Body Subtext (Detailed Paragraph)</label>
                 <textarea
-                  rows={3}
+                  rows={4}
                   value={activeSlide.subtext}
                   onChange={e => handleUpdateSlide('subtext', e.target.value)}
-                  className="w-full navy-input px-3.5 py-2 rounded-xl text-xs mt-1"
+                  className="w-full navy-input px-3.5 py-2 rounded-xl text-xs mt-1 leading-relaxed"
                 />
               </div>
 
@@ -1078,24 +1076,21 @@ export const CarouselStudio: React.FC<CarouselStudioProps> = ({
                 <MessageSquareText className="w-4 h-4 text-blue-600" />
                 AI Caption & Hashtags
               </h3>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center space-x-2">
                 <button
                   onClick={handleGenerateCaption}
-                  className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-xs font-bold text-emerald-800 flex items-center gap-1 transition-all"
+                  className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-1 transition-all"
                 >
-                  <Bot className="w-3.5 h-3.5" />
-                  <span>Regenerate</span>
+                  <Bot className="w-3.5 h-3.5" /> Regenerate
                 </button>
                 <button
                   onClick={() => {
-                    navigator.clipboard.writeText(`${currentCarousel.caption.text}\n\n${currentCarousel.caption.hashtags.join(' ')}`);
-                    setCopiedCaption(true);
-                    setTimeout(() => setCopiedCaption(false), 2000);
+                    const full = `${currentCarousel.caption.text}\n\n${currentCarousel.caption.cta}\n\n${currentCarousel.caption.hashtags.join(' ')}`;
+                    navigator.clipboard.writeText(full);
                   }}
-                  className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-bold text-slate-700 flex items-center gap-1"
+                  className="px-2.5 py-1 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-bold flex items-center gap-1"
                 >
-                  {copiedCaption ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedCaption ? 'Copied!' : 'Copy'}</span>
+                  <Copy className="w-3.5 h-3.5" /> Copy
                 </button>
               </div>
             </div>

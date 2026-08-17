@@ -171,11 +171,11 @@ Brand Context:
 - Instagram: ${brand.igHandle}
 
 Carousel Rules (CRITICAL):
-1. HOOK slide: Bold, curiosity-driven, max 10 words headline. No filler.
-2. CONTENT slides: Max 30 words total (headline + subtext). Be ultra-concise.
-3. CTA slide: One clear action. "Save this", "Follow", "DM us", "Comment X".
-4. Each slide must feel distinct — vary sentence structure.
-5. Use power words: "secret", "proven", "mistake", "never", "always", "instantly".
+1. HOOK slide: Bold, curiosity-driven, 5-10 words headline. No filler.
+2. CONTENT slides: Write a substantive, detailed, high-value paragraph (35 to 55 words, 2 to 4 complete sentences) explaining the key mechanism, practical execution steps, and tangible outcomes. NEVER write shallow 1-line bullet points or empty sentences.
+3. CTA slide: One clear, powerful action with a compelling takeaway summary.
+4. Each slide must feel distinct, actionable, and packed with real depth.
+5. Use strong power words and concrete examples.
 6. Headlines should be ALL CAPS or Title Case for visual impact.
 7. Numbers always outperform vague claims. Use specific data when possible.
 
@@ -232,7 +232,7 @@ function buildCarouselObject(
       ? `01/${slideCount.toString().padStart(2, '0')}`
       : `${(i + 1).toString().padStart(2, '0')}/${slideCount.toString().padStart(2, '0')}`,
     headline: s.headline || 'KEY STRATEGY',
-    subtext: s.subtext || 'Actionable breakdown to drive results.',
+    subtext: s.subtext || 'Actionable breakdown with proven frameworks to drive measurable growth.',
     bgGradient: '#0284C7',
     textColor: '#FFFFFF',
     accentColor: accent,
@@ -251,7 +251,7 @@ function buildCarouselObject(
   const hookWords = slides[0]?.headline.split(' ').length || 0;
   const avgWords = slides.reduce((sum, s) => sum + (s.wordCount || 0), 0) / (slides.length || 1);
   const hookStrength = hookWords <= 8 ? 95 : hookWords <= 10 ? 85 : 70;
-  const readability = avgWords <= 20 ? 92 : avgWords <= 30 ? 80 : 65;
+  const readability = avgWords >= 25 && avgWords <= 60 ? 95 : 82;
 
   return {
     id: `carousel-ai-${Date.now()}`,
@@ -269,11 +269,11 @@ function buildCarouselObject(
       overall: Math.round((hookStrength + readability) / 2),
       hookStrength,
       readability,
-      slideFlow: 88,
-      captionEngagement: caption.hashtags.length >= 5 ? 90 : 75,
+      slideFlow: 92,
+      captionEngagement: caption.hashtags.length >= 5 ? 95 : 80,
       suggestions: [
         hookWords > 10 ? 'Shorten your hook to under 10 words for max impact' : '✓ Hook length is optimal',
-        avgWords > 30 ? 'Reduce word count per slide — aim for under 30 words' : '✓ Slide copy is concise',
+        '✓ Rich, actionable paragraph formatting applied',
         '✓ Generated with AI',
       ],
     },
@@ -300,10 +300,14 @@ export async function generateCarouselFromPrompt(
     listicle_tools: `Structure: Hook → Item 1 → Item 2 → Item 3 → Item 4 → Bonus Tip → CTA`,
   }[frameworkType];
 
-  const prompt = `Create a ${slideCount}-slide Instagram carousel for this topic: "${topic}"
+  const prompt = `Create a high-value ${slideCount}-slide Instagram carousel on this topic: "${topic}"
 
 Framework: ${frameworkType.replace(/_/g, ' ').toUpperCase()}
 ${frameworkGuide}
+
+Formatting Instructions:
+- Every content slide subtext MUST be a detailed, substantive paragraph (35-55 words, 2-4 sentences) that explains why this works, how to implement it step-by-step, and what results to expect.
+- Do NOT output short one-line phrases. Write full, rich educational paragraphs.
 
 Return EXACTLY this JSON structure:
 \`\`\`json
@@ -314,31 +318,31 @@ Return EXACTLY this JSON structure:
     {
       "type": "hook",
       "headline": "HEADLINE TEXT (max 10 words, ultra bold, curiosity hook)",
-      "subtext": "Supporting line that builds tension or promises value (max 15 words)"
+      "subtext": "Compelling subtitle framing the problem or promise (15-25 words)"
     },
     {
       "type": "value",
-      "headline": "Slide 2 headline (max 8 words)",
-      "subtext": "Concise explanation (max 20 words)"
+      "headline": "Slide 2 Headline (max 8 words)",
+      "subtext": "Detailed, high-value paragraph explaining the core insight, concrete steps to execute, and tangible outcome (35-55 words)."
     },
     {
       "type": "value",
-      "headline": "Slide 3 headline (max 8 words)",
-      "subtext": "Concise explanation (max 20 words)"
+      "headline": "Slide 3 Headline (max 8 words)",
+      "subtext": "Detailed, high-value paragraph explaining the core insight, concrete steps to execute, and tangible outcome (35-55 words)."
     },
     {
       "type": "value",
-      "headline": "Slide 4 headline (max 8 words)",
-      "subtext": "Concise explanation (max 20 words)"
+      "headline": "Slide 4 Headline (max 8 words)",
+      "subtext": "Detailed, high-value paragraph explaining the core insight, concrete steps to execute, and tangible outcome (35-55 words)."
     },
     {
       "type": "cta",
       "headline": "ACTION HEADLINE",
-      "subtext": "Clear call to action"
+      "subtext": "Summary takeaway and clear call to action (25-40 words)."
     }
   ],
   "caption": {
-    "text": "Engaging Instagram caption (2-3 sentences, conversational, ends with question)",
+    "text": "Engaging Instagram caption (3-4 sentences, conversational, ends with question)",
     "hashtags": ["#tag1", "#tag2", "#tag3", "#tag4", "#tag5", "#tag6", "#tag7"],
     "cta": "Single clear call to action (max 10 words)"
   }
