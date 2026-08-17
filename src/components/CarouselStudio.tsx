@@ -1325,7 +1325,7 @@ export const CarouselStudio: React.FC<CarouselStudioProps> = ({
               <div className="p-3.5 rounded-2xl bg-sky-50 border border-sky-200 text-xs space-y-1">
                 <div className="flex items-center space-x-1.5 text-sky-900 font-bold">
                   <Clock className="w-4 h-4 text-sky-600" />
-                  <span>Automated Upstash QStash Queue</span>
+                  <span>Automated Cloud Publishing Queue</span>
                 </div>
                 <p className="text-slate-600 text-[11px]">
                   Lana will automatically publish this carousel on <strong className="text-slate-900">{scheduleDate} at {scheduleTime}</strong> in the background — even if you are offline!

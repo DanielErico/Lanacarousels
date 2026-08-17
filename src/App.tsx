@@ -114,7 +114,7 @@ export const App: React.FC = () => {
     const scheduledItem: Carousel = {
       ...updated,
       status: 'scheduled',
-      scheduledAt: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
+      scheduledAt: updated.scheduledAt || new Date(Date.now() + 86400000).toISOString(),
     };
     await handleSaveCarousel(scheduledItem);
     setActiveTab('calendar');

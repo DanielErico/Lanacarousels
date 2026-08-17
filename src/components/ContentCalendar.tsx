@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CalendarDays, ChevronLeft, ChevronRight, Clock, Plus, Instagram, CheckCircle2 } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Clock, Plus, Instagram, CheckCircle2, Calendar as CalendarIcon, ArrowRight } from 'lucide-react';
 import { Carousel } from '../types/lana';
 
 interface ContentCalendarProps {
@@ -13,7 +13,7 @@ export const ContentCalendar: React.FC<ContentCalendarProps> = ({
   onSelectCarousel,
   onOpenCreate,
 }) => {
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 7, 1)); // August 2026
+  const [currentDate, setCurrentDate] = useState(() => new Date());
   
   const monthName = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
   const daysInMonthCount = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
@@ -21,8 +21,13 @@ export const ContentCalendar: React.FC<ContentCalendarProps> = ({
 
   // Group user's carousels dynamically by calendar day
   const carouselDayMap: Record<number, Carousel[]> = {};
+  const scheduledList: Carousel[] = [];
+
   (carousels || []).forEach(car => {
     const targetDateStr = car.scheduledAt || car.publishedAt;
+    if (car.status === 'scheduled') {
+      scheduledList.push(car);
+    }
     if (targetDateStr) {
       const d = new Date(targetDateStr);
       // Ensure it belongs to current viewing month/year or map by day
@@ -34,6 +39,13 @@ export const ContentCalendar: React.FC<ContentCalendarProps> = ({
     }
   });
 
+  // Sort upcoming scheduled carousels by date
+  scheduledList.sort((a, b) => {
+    const timeA = a.scheduledAt ? new Date(a.scheduledAt).getTime() : 0;
+    const timeB = b.scheduledAt ? new Date(b.scheduledAt).getTime() : 0;
+    return timeA - timeB;
+  });
+
   const handlePrevMonth = () => {
     setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
   };
@@ -43,7 +55,9 @@ export const ContentCalendar: React.FC<ContentCalendarProps> = ({
   };
 
   const today = new Date().getDate();
-  const isCurrentViewingMonth = new Date().getMonth() === currentDate.getMonth();
+  const isCurrentViewingMonth = 
+    new Date().getMonth() === currentDate.getMonth() && 
+    new Date().getFullYear() === currentDate.getFullYear();
 
   return (
     <div className="space-y-6 pb-12">
@@ -55,7 +69,7 @@ export const ContentCalendar: React.FC<ContentCalendarProps> = ({
           </div>
           <div>
             <h2 className="font-headline text-2xl font-extrabold text-slate-900">Publishing Calendar</h2>
-            <p className="text-xs text-slate-500">Automated Instagram Upstash QStash queue for {monthName}</p>
+            <p className="text-xs text-slate-500">Automated Instagram publishing schedule for {monthName}</p>
           </div>
         </div>
 
@@ -154,6 +168,61 @@ export const ContentCalendar: React.FC<ContentCalendarProps> = ({
             );
           })}
         </div>
+      </div>
+
+      {/* Upcoming Scheduled Queue List */}
+      <div className="navy-card rounded-3xl p-6 space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+          <h3 className="font-headline text-lg font-bold text-slate-900 flex items-center gap-2">
+            <Clock className="w-5 h-5 text-sky-600" />
+            Upcoming Scheduled Queue ({scheduledList.length})
+          </h3>
+        </div>
+
+        {scheduledList.length === 0 ? (
+          <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200/80 text-slate-500 text-xs">
+            <p className="font-bold text-sm text-slate-700 mb-1">No upcoming scheduled posts</p>
+            <p>Carousels you schedule will appear here and automatically publish at their designated time.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {scheduledList.map(item => (
+              <div
+                key={item.id}
+                onClick={() => onSelectCarousel(item)}
+                className="p-4 rounded-2xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200 hover:border-slate-300 transition-all cursor-pointer flex flex-col justify-between space-y-3 group"
+              >
+                <div>
+                  <div className="flex items-center justify-between text-xs mb-2">
+                    <span className="px-2 py-0.5 rounded-md bg-sky-100 text-sky-800 font-bold font-mono text-[10px] uppercase">
+                      Scheduled
+                    </span>
+                    <span className="text-[11px] font-mono text-slate-500 font-bold flex items-center gap-1">
+                      <CalendarIcon className="w-3 h-3 text-sky-600" />
+                      {item.scheduledAt ? new Date(item.scheduledAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : 'Upcoming'}
+                    </span>
+                  </div>
+                  <h4 className="font-bold text-sm text-slate-900 line-clamp-1 group-hover:text-sky-600 transition-colors">
+                    {item.title}
+                  </h4>
+                  <p className="text-xs text-slate-500 line-clamp-2 mt-1">
+                    {item.caption?.text || 'Ready for publishing.'}
+                  </p>
+                </div>
+
+                <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600 font-semibold">
+                  <span className="font-mono flex items-center gap-1 text-[11px]">
+                    <Clock className="w-3 h-3 text-slate-400" />
+                    {item.scheduledAt ? new Date(item.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '10:00 AM'}
+                  </span>
+                  <span className="flex items-center gap-1 text-sky-600 font-bold text-[11px]">
+                    Open in Studio <ArrowRight className="w-3 h-3" />
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

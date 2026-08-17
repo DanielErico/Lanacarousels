@@ -15,6 +15,7 @@ const NavyOrangeDiagonal: React.FC<TemplateCanvasProps> = ({
   slide, slideIndex, totalSlides, brandName = 'YOUR BRAND', websiteUrl = 'www.yourwebsite.com'
 }) => {
   const isHook = slideIndex === 0;
+  const isCTA = slideIndex === totalSlides - 1;
   const slideLabel = `${String(slideIndex + 1).padStart(2, '0')}/${String(totalSlides).padStart(2, '0')}`;
   const num = slideIndex;
 
@@ -26,7 +27,7 @@ const NavyOrangeDiagonal: React.FC<TemplateCanvasProps> = ({
         : '#075985',
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-      padding: '36px 32px', boxSizing: 'border-box',
+      padding: '24px 22px', boxSizing: 'border-box',
     }}>
 
       {/* Diagonal Orange Bands */}
@@ -49,15 +50,15 @@ const NavyOrangeDiagonal: React.FC<TemplateCanvasProps> = ({
         zIndex: 10, position: 'relative',
       }}>
         <div style={{
-          fontSize: '13px', fontWeight: 800, color: '#FFFFFF',
-          letterSpacing: '1.5px', textTransform: 'uppercase',
+          fontSize: '11px', fontWeight: 800, color: '#FFFFFF',
+          letterSpacing: '1.2px', textTransform: 'uppercase',
         }}>
           {brandName || 'YOUR BRAND'}
         </div>
         <div style={{
-          fontSize: '13px', color: 'rgba(255,255,255,0.8)',
-          fontWeight: 700, background: 'rgba(0,0,0,0.25)',
-          padding: '4px 10px', borderRadius: '12px', letterSpacing: '1px',
+          fontSize: '10px', color: 'rgba(255,255,255,0.9)',
+          fontWeight: 700, background: 'rgba(0,0,0,0.3)',
+          padding: '3px 8px', borderRadius: '6px', letterSpacing: '0.8px',
         }}>
           {slideLabel}
         </div>
@@ -67,9 +68,9 @@ const NavyOrangeDiagonal: React.FC<TemplateCanvasProps> = ({
       {isHook ? (
         <div style={{ zIndex: 10, position: 'relative', margin: 'auto 0' }}>
           <div style={{
-            fontSize: '34px', fontWeight: 900, lineHeight: 1.2,
-            textTransform: 'uppercase', color: '#FFFFFF', letterSpacing: '-0.5px',
-            textShadow: '0 2px 10px rgba(0,0,0,0.3)',
+            fontSize: '26px', fontWeight: 900, lineHeight: 1.2,
+            textTransform: 'uppercase', color: '#FFFFFF', letterSpacing: '-0.4px',
+            textShadow: '0 2px 8px rgba(0,0,0,0.3)',
           }}>
             {slide.headline.split(' ').map((word, i) => (
               <span key={i} style={{ color: i % 3 === 1 ? '#FDBA74' : '#FFFFFF' }}>
@@ -78,41 +79,57 @@ const NavyOrangeDiagonal: React.FC<TemplateCanvasProps> = ({
             ))}
           </div>
           <div style={{
-            marginTop: '20px', width: '70px', height: '5px',
-            background: '#E8691C', borderRadius: '3px',
+            marginTop: '14px', width: '50px', height: '4px',
+            background: '#E8691C', borderRadius: '2px',
           }} />
           <div style={{
-            marginTop: '18px', fontSize: '16px', color: 'rgba(255,255,255,0.9)',
-            fontWeight: 500, lineHeight: 1.5,
+            marginTop: '12px', fontSize: '13px', color: 'rgba(255,255,255,0.9)',
+            fontWeight: 500, lineHeight: 1.45,
           }}>
-            Swipe to learn more →
+            {slide.subtext || 'Swipe to learn more →'}
+          </div>
+        </div>
+      ) : isCTA ? (
+        <div style={{ zIndex: 10, position: 'relative', margin: 'auto 0', textAlign: 'center' }}>
+          <div style={{
+            fontSize: '26px', fontWeight: 900, color: '#FFFFFF',
+            textTransform: 'uppercase', lineHeight: 1.2, marginBottom: '12px',
+          }}>
+            {slide.headline}
+          </div>
+          <div style={{
+            fontSize: '13.5px', color: 'rgba(255,255,255,0.95)', lineHeight: 1.55,
+            background: 'rgba(0,0,0,0.25)', padding: '14px 16px', borderRadius: '10px',
+            border: '1px solid rgba(255,255,255,0.15)',
+          }}>
+            {slide.subtext}
           </div>
         </div>
       ) : (
         <div style={{ zIndex: 10, position: 'relative', margin: 'auto 0' }}>
           {/* Number Pill */}
           <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            display: 'inline-flex', alignItems: 'center', gap: '5px',
             background: '#E8691C', color: '#FFFFFF',
-            padding: '6px 14px', borderRadius: '8px',
-            fontSize: '14px', fontWeight: 900, letterSpacing: '1px',
-            marginBottom: '16px',
+            padding: '4px 10px', borderRadius: '6px',
+            fontSize: '11px', fontWeight: 900, letterSpacing: '0.8px',
+            marginBottom: '10px',
           }}>
             STEP {String(num).padStart(2, '0')}
           </div>
 
           <div style={{
-            fontSize: '28px', fontWeight: 900, color: '#FFFFFF',
-            textTransform: 'uppercase', lineHeight: 1.2, letterSpacing: '-0.3px',
-            marginBottom: '16px',
+            fontSize: '20px', fontWeight: 900, color: '#FFFFFF',
+            textTransform: 'uppercase', lineHeight: 1.22, letterSpacing: '-0.2px',
+            marginBottom: '10px',
           }}>
             {slide.headline}
           </div>
 
           <div style={{
-            fontSize: '18px', color: 'rgba(255,255,255,0.95)',
-            lineHeight: 1.6, background: 'rgba(0,0,0,0.2)',
-            padding: '18px 20px', borderRadius: '12px',
+            fontSize: '13.5px', color: 'rgba(255,255,255,0.95)',
+            lineHeight: 1.55, background: 'rgba(0,0,0,0.25)',
+            padding: '13px 15px', borderRadius: '10px',
             borderLeft: '4px solid #E8691C',
           }}>
             {slide.subtext}
@@ -124,15 +141,15 @@ const NavyOrangeDiagonal: React.FC<TemplateCanvasProps> = ({
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         zIndex: 10, position: 'relative', borderTop: '1px solid rgba(255,255,255,0.15)',
-        paddingTop: '12px',
+        paddingTop: '10px',
       }}>
         <div style={{
-          fontSize: '13px', color: 'rgba(255,255,255,0.7)',
+          fontSize: '11px', color: 'rgba(255,255,255,0.75)',
           letterSpacing: '0.5px', fontWeight: 600,
         }}>
           {websiteUrl}
         </div>
-        <div style={{ fontSize: '16px', color: '#FDBA74', fontWeight: 900 }}>››</div>
+        <div style={{ fontSize: '14px', color: '#FDBA74', fontWeight: 900 }}>››</div>
       </div>
     </div>
   );
@@ -143,15 +160,16 @@ const AgencyBlackBlueWave: React.FC<TemplateCanvasProps> = ({
   slide, slideIndex, totalSlides, brandName = 'AGENCY NAME', websiteUrl = 'www.yourwebsite.com'
 }) => {
   const isHook = slideIndex === 0;
+  const isCTA = slideIndex === totalSlides - 1;
   const slideLabel = `${String(slideIndex + 1).padStart(2, '0')}/${String(totalSlides).padStart(2, '0')}`;
 
   return (
     <div style={{
       width: '100%', height: '100%', position: 'relative', overflow: 'hidden',
-      background: isHook ? '#09090B' : '#FFFFFF',
+      background: isHook ? '#09090B' : isCTA ? '#09090B' : '#FFFFFF',
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-      padding: '36px 32px', boxSizing: 'border-box',
+      padding: '24px 22px', boxSizing: 'border-box',
     }}>
 
       {/* Header */}
@@ -160,19 +178,19 @@ const AgencyBlackBlueWave: React.FC<TemplateCanvasProps> = ({
         zIndex: 20, position: 'relative',
       }}>
         <div style={{
-          fontSize: '14px', fontWeight: 900,
-          color: isHook ? '#FFFFFF' : '#0F172A',
-          letterSpacing: '1.5px', textTransform: 'uppercase',
+          fontSize: '11px', fontWeight: 900,
+          color: isHook || isCTA ? '#FFFFFF' : '#0F172A',
+          letterSpacing: '1.2px', textTransform: 'uppercase',
         }}>
           <span>{brandName || 'AGENCY'} </span>
           <span style={{ color: '#0284C7' }}>•</span>
         </div>
         <div style={{
-          fontSize: '13px',
-          color: isHook ? 'rgba(255,255,255,0.8)' : '#0F172A',
+          fontSize: '10px',
+          color: isHook || isCTA ? 'rgba(255,255,255,0.8)' : '#0F172A',
           fontWeight: 700,
-          background: isHook ? 'rgba(255,255,255,0.1)' : '#F1F5F9',
-          padding: '4px 10px', borderRadius: '8px',
+          background: isHook || isCTA ? 'rgba(255,255,255,0.1)' : '#F1F5F9',
+          padding: '3px 8px', borderRadius: '6px',
         }}>
           {slideLabel}
         </div>
@@ -182,21 +200,37 @@ const AgencyBlackBlueWave: React.FC<TemplateCanvasProps> = ({
       {isHook ? (
         <div style={{ zIndex: 10, position: 'relative', margin: 'auto 0' }}>
           <div style={{
-            fontSize: '36px', fontWeight: 900, color: '#FFFFFF',
-            textTransform: 'uppercase', lineHeight: 1.15, letterSpacing: '-0.5px',
+            fontSize: '27px', fontWeight: 900, color: '#FFFFFF',
+            textTransform: 'uppercase', lineHeight: 1.18, letterSpacing: '-0.4px',
           }}>
             {slide.headline}
           </div>
-          <div style={{ marginTop: '24px' }}>
+          <div style={{ marginTop: '16px' }}>
             <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              display: 'inline-flex', alignItems: 'center', gap: '6px',
               background: '#0284C7', color: '#FFFFFF',
-              padding: '10px 20px', fontSize: '13px',
-              fontWeight: 800, letterSpacing: '1px',
-              textTransform: 'uppercase', borderRadius: '8px',
+              padding: '8px 16px', fontSize: '11px',
+              fontWeight: 800, letterSpacing: '0.8px',
+              textTransform: 'uppercase', borderRadius: '6px',
             }}>
-              SWIPE TO READ <span style={{ fontSize: '16px' }}>›</span>
+              SWIPE TO READ <span style={{ fontSize: '13px' }}>›</span>
             </div>
+          </div>
+        </div>
+      ) : isCTA ? (
+        <div style={{ zIndex: 10, position: 'relative', margin: 'auto 0', textAlign: 'center' }}>
+          <div style={{
+            fontSize: '26px', fontWeight: 900, color: '#FFFFFF',
+            textTransform: 'uppercase', lineHeight: 1.2, marginBottom: '12px',
+          }}>
+            {slide.headline}
+          </div>
+          <div style={{
+            fontSize: '13.5px', color: '#E2E8F0', lineHeight: 1.55,
+            background: 'rgba(255,255,255,0.06)', padding: '14px 16px', borderRadius: '10px',
+            border: '1px solid rgba(255,255,255,0.12)',
+          }}>
+            {slide.subtext}
           </div>
         </div>
       ) : (
@@ -204,24 +238,24 @@ const AgencyBlackBlueWave: React.FC<TemplateCanvasProps> = ({
           {/* Blue Step Badge */}
           <div style={{
             display: 'inline-block', background: '#E0F2FE', color: '#0284C7',
-            padding: '6px 12px', borderRadius: '6px',
-            fontSize: '13px', fontWeight: 800, letterSpacing: '1px',
-            marginBottom: '16px',
+            padding: '4px 10px', borderRadius: '6px',
+            fontSize: '11px', fontWeight: 800, letterSpacing: '0.8px',
+            marginBottom: '10px',
           }}>
             INSIGHT #{slideIndex}
           </div>
 
           <div style={{
-            fontSize: '28px', fontWeight: 900, color: '#0284C7',
-            textTransform: 'uppercase', lineHeight: 1.2,
-            letterSpacing: '-0.3px', marginBottom: '16px',
+            fontSize: '20px', fontWeight: 900, color: '#0284C7',
+            textTransform: 'uppercase', lineHeight: 1.22,
+            letterSpacing: '-0.2px', marginBottom: '10px',
           }}>
             {slide.headline}
           </div>
 
           <div style={{
-            fontSize: '19px', color: '#1E293B', lineHeight: 1.65,
-            background: '#F8FAFC', padding: '20px 22px', borderRadius: '12px',
+            fontSize: '13.5px', color: '#1E293B', lineHeight: 1.55,
+            background: '#F8FAFC', padding: '13px 15px', borderRadius: '10px',
             border: '1px solid #E2E8F0',
           }}>
             {slide.subtext}
@@ -232,17 +266,17 @@ const AgencyBlackBlueWave: React.FC<TemplateCanvasProps> = ({
       {/* Footer */}
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        zIndex: 15, position: 'relative', borderTop: `1px solid ${isHook ? 'rgba(255,255,255,0.15)' : '#E2E8F0'}`,
-        paddingTop: '12px',
+        zIndex: 15, position: 'relative', borderTop: `1px solid ${isHook || isCTA ? 'rgba(255,255,255,0.15)' : '#E2E8F0'}`,
+        paddingTop: '10px',
       }}>
         <div style={{
-          fontSize: '13px',
-          color: isHook ? 'rgba(255,255,255,0.7)' : '#64748B',
+          fontSize: '11px',
+          color: isHook || isCTA ? 'rgba(255,255,255,0.7)' : '#64748B',
           letterSpacing: '0.5px', fontWeight: 600,
         }}>
           {websiteUrl}
         </div>
-        <div style={{ fontSize: '16px', color: '#0284C7', fontWeight: 900 }}>››</div>
+        <div style={{ fontSize: '14px', color: '#0284C7', fontWeight: 900 }}>››</div>
       </div>
     </div>
   );
@@ -253,6 +287,7 @@ const AiDarkTechPurple: React.FC<TemplateCanvasProps> = ({
   slide, slideIndex, totalSlides, brandName = 'AI AGENCY', websiteUrl = '@lana.carousel'
 }) => {
   const isHook = slideIndex === 0;
+  const isCTA = slideIndex === totalSlides - 1;
   const slideLabel = `${String(slideIndex + 1).padStart(2, '0')}/${String(totalSlides).padStart(2, '0')}`;
   const num = String(slideIndex).padStart(2, '0');
 
@@ -261,10 +296,12 @@ const AiDarkTechPurple: React.FC<TemplateCanvasProps> = ({
       width: '100%', height: '100%', position: 'relative', overflow: 'hidden',
       background: isHook
         ? 'linear-gradient(145deg, #0B0B2A 0%, #151545 100%)'
+        : isCTA
+        ? 'linear-gradient(145deg, #0B0B2A 0%, #151545 100%)'
         : '#F5F3FF',
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-      padding: '36px 32px', boxSizing: 'border-box',
+      padding: '24px 22px', boxSizing: 'border-box',
     }}>
 
       {/* Header */}
@@ -273,18 +310,18 @@ const AiDarkTechPurple: React.FC<TemplateCanvasProps> = ({
         zIndex: 20, position: 'relative',
       }}>
         <div style={{
-          fontSize: '13px', fontWeight: 900, letterSpacing: '1.5px',
+          fontSize: '11px', fontWeight: 900, letterSpacing: '1.2px',
           textTransform: 'uppercase',
-          color: isHook ? '#FFFFFF' : '#4C1D95',
+          color: isHook || isCTA ? '#FFFFFF' : '#4C1D95',
         }}>
           {brandName || 'AI AGENCY'}
         </div>
         <div style={{
-          fontSize: '13px',
-          color: isHook ? 'rgba(255,255,255,0.8)' : '#5B21B6',
+          fontSize: '10px',
+          color: isHook || isCTA ? 'rgba(255,255,255,0.8)' : '#5B21B6',
           fontWeight: 700,
-          background: isHook ? 'rgba(255,255,255,0.1)' : '#EDE9FE',
-          padding: '4px 10px', borderRadius: '8px',
+          background: isHook || isCTA ? 'rgba(255,255,255,0.1)' : '#EDE9FE',
+          padding: '3px 8px', borderRadius: '6px',
         }}>
           {slideLabel}
         </div>
@@ -294,44 +331,60 @@ const AiDarkTechPurple: React.FC<TemplateCanvasProps> = ({
       {isHook ? (
         <div style={{ zIndex: 10, position: 'relative', margin: 'auto 0' }}>
           <div style={{
-            fontSize: '34px', fontWeight: 900, color: '#FFFFFF',
-            textTransform: 'uppercase', lineHeight: 1.18, letterSpacing: '-0.5px',
+            fontSize: '26px', fontWeight: 900, color: '#FFFFFF',
+            textTransform: 'uppercase', lineHeight: 1.2, letterSpacing: '-0.4px',
           }}>
             {slide.headline}
           </div>
           <div style={{
-            marginTop: '20px', display: 'inline-flex', alignItems: 'center', gap: '8px',
+            marginTop: '16px', display: 'inline-flex', alignItems: 'center', gap: '6px',
             background: 'linear-gradient(90deg, #6366F1, #8B5CF6)',
-            color: '#FFFFFF', padding: '10px 18px', borderRadius: '8px',
-            fontSize: '14px', fontWeight: 800,
+            color: '#FFFFFF', padding: '8px 16px', borderRadius: '6px',
+            fontSize: '11px', fontWeight: 800,
           }}>
             SWIPE TO EXPLORE ❯❯
+          </div>
+        </div>
+      ) : isCTA ? (
+        <div style={{ zIndex: 10, position: 'relative', margin: 'auto 0', textAlign: 'center' }}>
+          <div style={{
+            fontSize: '26px', fontWeight: 900, color: '#FFFFFF',
+            textTransform: 'uppercase', lineHeight: 1.2, marginBottom: '12px',
+          }}>
+            {slide.headline}
+          </div>
+          <div style={{
+            fontSize: '13.5px', color: '#E0E7FF', lineHeight: 1.55,
+            background: 'rgba(255,255,255,0.08)', padding: '14px 16px', borderRadius: '10px',
+            border: '1px solid rgba(255,255,255,0.15)',
+          }}>
+            {slide.subtext}
           </div>
         </div>
       ) : (
         <div style={{ zIndex: 10, position: 'relative', margin: 'auto 0' }}>
           <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            display: 'inline-flex', alignItems: 'center', gap: '5px',
             background: '#6366F1', color: '#FFFFFF',
-            padding: '6px 12px', borderRadius: '6px',
-            fontSize: '13px', fontWeight: 800, letterSpacing: '1px',
-            marginBottom: '16px',
+            padding: '4px 10px', borderRadius: '6px',
+            fontSize: '11px', fontWeight: 800, letterSpacing: '0.8px',
+            marginBottom: '10px',
           }}>
             POINT {num}
           </div>
 
           <div style={{
-            fontSize: '28px', fontWeight: 900, color: '#1E1B4B',
-            textTransform: 'uppercase', lineHeight: 1.2, letterSpacing: '-0.3px',
-            marginBottom: '16px',
+            fontSize: '20px', fontWeight: 900, color: '#1E1B4B',
+            textTransform: 'uppercase', lineHeight: 1.22, letterSpacing: '-0.2px',
+            marginBottom: '10px',
           }}>
             {slide.headline}
           </div>
 
           <div style={{
-            fontSize: '19px', color: '#312E81', lineHeight: 1.65,
-            background: '#FFFFFF', padding: '20px 22px', borderRadius: '14px',
-            boxShadow: '0 4px 20px rgba(99, 102, 241, 0.08)',
+            fontSize: '13.5px', color: '#312E81', lineHeight: 1.55,
+            background: '#FFFFFF', padding: '13px 15px', borderRadius: '10px',
+            boxShadow: '0 4px 16px rgba(99, 102, 241, 0.06)',
             border: '1px solid #E0E7FF',
           }}>
             {slide.subtext}
@@ -343,17 +396,17 @@ const AiDarkTechPurple: React.FC<TemplateCanvasProps> = ({
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         zIndex: 10, position: 'relative',
-        borderTop: `1px solid ${isHook ? 'rgba(255,255,255,0.15)' : '#DDD6FE'}`,
-        paddingTop: '12px',
+        borderTop: `1px solid ${isHook || isCTA ? 'rgba(255,255,255,0.15)' : '#DDD6FE'}`,
+        paddingTop: '10px',
       }}>
         <div style={{
-          fontSize: '13px',
-          color: isHook ? 'rgba(255,255,255,0.7)' : '#6D28D9',
+          fontSize: '11px',
+          color: isHook || isCTA ? 'rgba(255,255,255,0.7)' : '#6D28D9',
           letterSpacing: '0.5px', fontWeight: 600,
         }}>
           {websiteUrl}
         </div>
-        <div style={{ fontSize: '15px', color: isHook ? '#A5B4FC' : '#6366F1', fontWeight: 900 }}>❯❯</div>
+        <div style={{ fontSize: '13px', color: isHook || isCTA ? '#A5B4FC' : '#6366F1', fontWeight: 900 }}>❯❯</div>
       </div>
     </div>
   );
@@ -364,6 +417,7 @@ const DarkNavyBlueFrame: React.FC<TemplateCanvasProps> = ({
   slide, slideIndex, totalSlides, brandName = 'COMPANY LOGO', websiteUrl = 'yourwebsite.com'
 }) => {
   const isHook = slideIndex === 0;
+  const isCTA = slideIndex === totalSlides - 1;
   const slideLabel = `${String(slideIndex + 1).padStart(2, '0')}/${String(totalSlides).padStart(2, '0')}`;
   const num = slideIndex;
 
@@ -373,7 +427,7 @@ const DarkNavyBlueFrame: React.FC<TemplateCanvasProps> = ({
       background: 'linear-gradient(160deg, #0284C7 0%, #0369A1 50%, #075985 100%)',
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-      padding: '36px 32px', boxSizing: 'border-box',
+      padding: '24px 22px', boxSizing: 'border-box',
     }}>
 
       {/* Header */}
@@ -382,15 +436,15 @@ const DarkNavyBlueFrame: React.FC<TemplateCanvasProps> = ({
         zIndex: 20, position: 'relative',
       }}>
         <div style={{
-          fontSize: '13px', fontWeight: 900, color: '#FFFFFF',
-          letterSpacing: '1.5px', textTransform: 'uppercase',
+          fontSize: '11px', fontWeight: 900, color: '#FFFFFF',
+          letterSpacing: '1.2px', textTransform: 'uppercase',
         }}>
           {brandName || 'COMPANY LOGO'}
         </div>
         <div style={{
-          fontSize: '13px', color: '#E0F2FE',
+          fontSize: '10px', color: '#E0F2FE',
           fontWeight: 700, background: 'rgba(0,0,0,0.25)',
-          padding: '4px 10px', borderRadius: '8px',
+          padding: '3px 8px', borderRadius: '6px',
         }}>
           {slideLabel}
         </div>
@@ -400,8 +454,8 @@ const DarkNavyBlueFrame: React.FC<TemplateCanvasProps> = ({
       {isHook ? (
         <div style={{ zIndex: 10, position: 'relative', margin: 'auto 0' }}>
           <div style={{
-            fontSize: '35px', fontWeight: 900, color: '#FFFFFF',
-            textTransform: 'uppercase', lineHeight: 1.18, letterSpacing: '-0.5px',
+            fontSize: '26px', fontWeight: 900, color: '#FFFFFF',
+            textTransform: 'uppercase', lineHeight: 1.2, letterSpacing: '-0.4px',
           }}>
             {slide.headline.split(' ').map((word, i) => (
               <span key={i} style={{ color: i % 3 === 1 ? '#38BDF8' : '#FFFFFF' }}>
@@ -409,31 +463,47 @@ const DarkNavyBlueFrame: React.FC<TemplateCanvasProps> = ({
               </span>
             ))}
           </div>
-          <div style={{ marginTop: '20px', width: '80px', height: '4px', background: '#38BDF8', borderRadius: '2px' }} />
-          <div style={{ marginTop: '16px', fontSize: '15px', color: '#E0F2FE', fontWeight: 600 }}>
-            Swipe to see all steps →
+          <div style={{ marginTop: '14px', width: '50px', height: '4px', background: '#38BDF8', borderRadius: '2px' }} />
+          <div style={{ marginTop: '12px', fontSize: '13px', color: '#E0F2FE', fontWeight: 500 }}>
+            {slide.subtext || 'Swipe to see all steps →'}
+          </div>
+        </div>
+      ) : isCTA ? (
+        <div style={{ zIndex: 10, position: 'relative', margin: 'auto 0', textAlign: 'center' }}>
+          <div style={{
+            fontSize: '26px', fontWeight: 900, color: '#FFFFFF',
+            textTransform: 'uppercase', lineHeight: 1.2, marginBottom: '12px',
+          }}>
+            {slide.headline}
+          </div>
+          <div style={{
+            fontSize: '13.5px', color: '#F0F9FF', lineHeight: 1.55,
+            background: 'rgba(0,0,0,0.25)', padding: '14px 16px', borderRadius: '10px',
+            border: '1px solid rgba(255,255,255,0.2)',
+          }}>
+            {slide.subtext}
           </div>
         </div>
       ) : (
         <div style={{ zIndex: 10, position: 'relative', margin: 'auto 0' }}>
           <div style={{
-            fontSize: '36px', fontWeight: 900, color: '#38BDF8',
-            lineHeight: 1, marginBottom: '12px',
+            fontSize: '22px', fontWeight: 900, color: '#38BDF8',
+            lineHeight: 1, marginBottom: '8px',
           }}>
             #{num}
           </div>
 
           <div style={{
-            fontSize: '28px', fontWeight: 900, color: '#FFFFFF',
-            textTransform: 'uppercase', lineHeight: 1.2,
-            marginBottom: '16px',
+            fontSize: '20px', fontWeight: 900, color: '#FFFFFF',
+            textTransform: 'uppercase', lineHeight: 1.22,
+            marginBottom: '10px',
           }}>
             {slide.headline}
           </div>
 
           <div style={{
-            fontSize: '19px', color: '#F0F9FF', lineHeight: 1.65,
-            background: 'rgba(0,0,0,0.25)', padding: '20px 22px', borderRadius: '12px',
+            fontSize: '13.5px', color: '#F0F9FF', lineHeight: 1.55,
+            background: 'rgba(0,0,0,0.25)', padding: '13px 15px', borderRadius: '10px',
             borderLeft: '4px solid #38BDF8',
           }}>
             {slide.subtext}
@@ -445,15 +515,15 @@ const DarkNavyBlueFrame: React.FC<TemplateCanvasProps> = ({
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         zIndex: 10, position: 'relative', borderTop: '1px solid rgba(255,255,255,0.2)',
-        paddingTop: '12px',
+        paddingTop: '10px',
       }}>
         <div style={{
-          fontSize: '13px', color: 'rgba(255,255,255,0.75)',
+          fontSize: '11px', color: 'rgba(255,255,255,0.75)',
           letterSpacing: '0.5px', fontWeight: 600,
         }}>
           {websiteUrl}
         </div>
-        <div style={{ fontSize: '18px', color: '#38BDF8', fontWeight: 900 }}>→</div>
+        <div style={{ fontSize: '15px', color: '#38BDF8', fontWeight: 900 }}>→</div>
       </div>
     </div>
   );
@@ -474,7 +544,7 @@ const SeamlessYellowBold: React.FC<TemplateCanvasProps> = ({
       background: isHook ? '#FFFFFF' : isCTA ? '#111827' : '#FACC15',
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-      padding: '36px 32px', boxSizing: 'border-box',
+      padding: '24px 22px', boxSizing: 'border-box',
     }}>
 
       {/* Header */}
@@ -483,18 +553,18 @@ const SeamlessYellowBold: React.FC<TemplateCanvasProps> = ({
         zIndex: 10, position: 'relative',
       }}>
         <div style={{
-          fontSize: '14px', fontWeight: 900,
+          fontSize: '11px', fontWeight: 900,
           color: isCTA ? '#FACC15' : '#000000',
-          letterSpacing: '1.5px', textTransform: 'uppercase',
+          letterSpacing: '1.2px', textTransform: 'uppercase',
         }}>
           {brandName || 'BRAND'}
         </div>
         <div style={{
-          fontSize: '13px',
+          fontSize: '10px',
           color: isCTA ? '#FACC15' : '#000000',
           fontWeight: 800,
           background: isCTA ? 'rgba(250,204,21,0.15)' : 'rgba(0,0,0,0.08)',
-          padding: '4px 10px', borderRadius: '8px',
+          padding: '3px 8px', borderRadius: '6px',
         }}>
           {slideLabel}
         </div>
@@ -504,17 +574,17 @@ const SeamlessYellowBold: React.FC<TemplateCanvasProps> = ({
       {isHook ? (
         <div style={{ zIndex: 10, position: 'relative', margin: 'auto 0' }}>
           <div style={{
-            fontSize: '36px', fontWeight: 900, color: '#000000',
-            lineHeight: 1.15, textTransform: 'uppercase', letterSpacing: '-0.5px',
+            fontSize: '27px', fontWeight: 900, color: '#000000',
+            lineHeight: 1.18, textTransform: 'uppercase', letterSpacing: '-0.4px',
           }}>
             {slide.headline}
           </div>
-          <div style={{ marginTop: '22px' }}>
+          <div style={{ marginTop: '16px' }}>
             <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              display: 'inline-flex', alignItems: 'center', gap: '6px',
               background: '#000000', color: '#FACC15',
-              padding: '10px 18px', borderRadius: '8px',
-              fontSize: '13px', fontWeight: 900, letterSpacing: '1px',
+              padding: '8px 14px', borderRadius: '6px',
+              fontSize: '11px', fontWeight: 900, letterSpacing: '0.8px',
             }}>
               SWIPE TO READ ▷▷▷
             </div>
@@ -523,14 +593,14 @@ const SeamlessYellowBold: React.FC<TemplateCanvasProps> = ({
       ) : isCTA ? (
         <div style={{ zIndex: 10, position: 'relative', margin: 'auto 0', textAlign: 'center' }}>
           <div style={{
-            fontSize: '44px', fontWeight: 900, color: '#FACC15',
-            lineHeight: 1.1, textTransform: 'uppercase', marginBottom: '16px',
+            fontSize: '26px', fontWeight: 900, color: '#FACC15',
+            lineHeight: 1.2, textTransform: 'uppercase', marginBottom: '12px',
           }}>
             Save & Share
           </div>
           <div style={{
-            fontSize: '19px', color: '#E5E7EB', lineHeight: 1.6,
-            maxWidth: '90%', margin: '0 auto',
+            fontSize: '13.5px', color: '#E5E7EB', lineHeight: 1.55,
+            maxWidth: '92%', margin: '0 auto',
           }}>
             {slide.subtext || 'Follow for more actionable insights and daily growth strategies.'}
           </div>
@@ -541,26 +611,26 @@ const SeamlessYellowBold: React.FC<TemplateCanvasProps> = ({
           <div style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             background: '#000000', color: '#FACC15',
-            padding: '6px 14px', borderRadius: '8px',
-            fontSize: '16px', fontWeight: 900, letterSpacing: '1px',
-            marginBottom: '16px',
+            padding: '4px 10px', borderRadius: '6px',
+            fontSize: '12px', fontWeight: 900, letterSpacing: '0.8px',
+            marginBottom: '10px',
           }}>
             #{num}
           </div>
 
           <div style={{
-            fontSize: '30px', fontWeight: 900, color: '#000000',
-            lineHeight: 1.18, textTransform: 'uppercase',
-            letterSpacing: '-0.5px', marginBottom: '16px',
+            fontSize: '20px', fontWeight: 900, color: '#000000',
+            lineHeight: 1.22, textTransform: 'uppercase',
+            letterSpacing: '-0.2px', marginBottom: '10px',
           }}>
             {slide.headline}
           </div>
 
           <div style={{
-            fontSize: '19px', color: '#000000', lineHeight: 1.65,
+            fontSize: '13.5px', color: '#000000', lineHeight: 1.55,
             fontWeight: 500, background: 'rgba(255,255,255,0.75)',
-            padding: '20px 22px', borderRadius: '14px',
-            border: '2px solid rgba(0,0,0,0.1)',
+            padding: '13px 15px', borderRadius: '10px',
+            border: '1.5px solid rgba(0,0,0,0.1)',
           }}>
             {slide.subtext}
           </div>
@@ -571,18 +641,18 @@ const SeamlessYellowBold: React.FC<TemplateCanvasProps> = ({
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         zIndex: 10, position: 'relative',
-        borderTop: `1px solid ${isCTA ? 'rgba(250,204,21,0.2)' : 'rgba(0,0,0,0.15)'}`,
-        paddingTop: '12px',
+        borderTop: `1px solid ${isCTA ? 'rgba(250,204,21,0.2)' : 'rgba(0,0,0,0.12)'}`,
+        paddingTop: '10px',
       }}>
         <div style={{
-          fontSize: '13px',
+          fontSize: '11px',
           color: isCTA ? '#FACC15' : '#000000',
           letterSpacing: '0.5px', fontWeight: 700,
         }}>
           {websiteUrl}
         </div>
         <div style={{
-          fontSize: '16px',
+          fontSize: '14px',
           color: isCTA ? '#FACC15' : '#000000',
           fontWeight: 900,
         }}>
