@@ -87,6 +87,8 @@ export interface Brand {
   igHandle: string;
   igConnected: boolean;
   igAccountName?: string;
+  igToken?: string;
+  igAccountId?: string;
   isPrimary?: boolean;
 }
 

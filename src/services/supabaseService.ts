@@ -28,13 +28,15 @@ export async function fetchUserBrands(userId: string): Promise<Brand[]> {
     igHandle: b.ig_handle || '',
     igConnected: b.ig_connected || false,
     igAccountName: b.ig_account_name || '',
+    igToken: b.ig_token || '',
+    igAccountId: b.ig_account_id || '',
     postingFrequency: b.posting_frequency || '3x / week',
     isPrimary: b.is_primary ?? false,
   }));
 }
 
 export async function saveBrandToSupabase(userId: string, brand: Brand): Promise<Brand | null> {
-  const payload = {
+  const payload: any = {
     user_id: userId,
     name: brand.name,
     website_url: brand.websiteUrl,
@@ -51,6 +53,9 @@ export async function saveBrandToSupabase(userId: string, brand: Brand): Promise
     posting_frequency: brand.postingFrequency,
     is_primary: true,
   };
+
+  if (brand.igToken) payload.ig_token = brand.igToken;
+  if (brand.igAccountId) payload.ig_account_id = brand.igAccountId;
 
   // Check if existing brand (UUID string format)
   const isExistingUuid = Boolean(brand.id && brand.id.includes('-') && !brand.id.startsWith('brand-'));

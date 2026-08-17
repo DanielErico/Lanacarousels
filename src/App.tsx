@@ -236,6 +236,7 @@ export const App: React.FC = () => {
               brand={currentBrand}
               onSaveCarousel={handleSaveCarousel}
               onScheduleCarousel={handleScheduleCarousel}
+              onOpenSettings={() => setSettingsOpen(true)}
             />
           )}
 

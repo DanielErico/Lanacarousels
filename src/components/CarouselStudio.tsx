@@ -56,6 +56,7 @@ interface CarouselStudioProps {
   brand?: Brand;
   onSaveCarousel: (carousel: Carousel) => void;
   onScheduleCarousel: (carousel: Carousel) => void;
+  onOpenSettings?: () => void;
 }
 
 export const CarouselStudio: React.FC<CarouselStudioProps> = ({
@@ -63,6 +64,7 @@ export const CarouselStudio: React.FC<CarouselStudioProps> = ({
   brand,
   onSaveCarousel,
   onScheduleCarousel,
+  onOpenSettings,
 }) => {
   const [activeInputTab, setActiveInputTab] = useState<'url' | 'prompt' | 'voice'>('prompt');
   const [websiteUrl, setWebsiteUrl] = useState('https://lana.ai');
@@ -184,13 +186,17 @@ export const CarouselStudio: React.FC<CarouselStudioProps> = ({
         }
       }
 
-      const fullCaption = `${currentCarousel.title}\n\n${currentCarousel.caption.text}\n\n${currentCarousel.caption.hashtags.join(' ')}`;
+      const hashtags = (currentCarousel.caption.hashtags || [])
+        .map(h => (h.startsWith('#') ? h : `#${h}`))
+        .join(' ');
+      const cta = currentCarousel.caption.cta ? `\n\n${currentCarousel.caption.cta}` : '';
+      const captionBody = `${currentCarousel.caption.text || ''}${cta}\n\n${hashtags}`.trim();
 
       // Pass carouselId so Supabase Storage uploads are properly namespaced
       const res = await publishCarouselToInstagram(
         slideUrls.length > 0 ? slideUrls : ['https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1080&h=1350&fit=crop'],
         currentCarousel.title,
-        fullCaption,
+        captionBody,
         undefined,
         undefined,
         currentCarousel.id
@@ -1112,13 +1118,26 @@ export const CarouselStudio: React.FC<CarouselStudioProps> = ({
             </div>
             <button onClick={() => setPublishErrorMessage('')} className="text-slate-400 hover:text-white font-bold text-sm">✕</button>
           </div>
-          <button
-            onClick={() => initiateInstagramOAuthLogin()}
-            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md hover:opacity-95"
-          >
-            <Instagram className="w-4 h-4 text-white" />
-            <span>1-Click Connect Instagram Account</span>
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => initiateInstagramOAuthLogin()}
+              className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md hover:opacity-95"
+            >
+              <Instagram className="w-4 h-4 text-white" />
+              <span>1-Click Connect Meta</span>
+            </button>
+            {onOpenSettings && (
+              <button
+                onClick={() => {
+                  setPublishErrorMessage('');
+                  onOpenSettings();
+                }}
+                className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 transition-all"
+              >
+                Settings
+              </button>
+            )}
+          </div>
         </div>
       )}
 

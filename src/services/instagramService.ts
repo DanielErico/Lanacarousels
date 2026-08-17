@@ -75,6 +75,37 @@ export function isInstagramReadyToPublish(): boolean {
 
 // ─── 1-Click Meta / Instagram OAuth Redirect Flow ──────────────────────────────
 
+/**
+ * Exchanges a short-lived (~1 hour) User Access Token for a long-lived (~60 days) token.
+ */
+export async function exchangeForLongLivedToken(
+  shortLivedToken: string,
+  customAppId?: string,
+  customAppSecret?: string
+): Promise<string> {
+  const creds = getStoredInstagramCredentials();
+  const appId = customAppId || creds.appId || (import.meta.env.VITE_INSTAGRAM_APP_ID as string);
+  const appSecret = customAppSecret || creds.appSecret || (import.meta.env.VITE_INSTAGRAM_APP_SECRET as string);
+
+  if (!appId || !appSecret || !shortLivedToken) {
+    return shortLivedToken;
+  }
+
+  try {
+    const url = `https://graph.facebook.com/v19.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${encodeURIComponent(appId)}&client_secret=${encodeURIComponent(appSecret)}&fb_exchange_token=${encodeURIComponent(shortLivedToken)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (res.ok && data.access_token) {
+      return data.access_token;
+    }
+  } catch (err) {
+    console.warn('[Meta Token Exchange] Could not exchange for long-lived token, using standard token:', err);
+  }
+
+  return shortLivedToken;
+}
+
 export function initiateInstagramOAuthLogin(customAppId?: string) {
   const creds = getStoredInstagramCredentials();
   const appId = customAppId || creds.appId || (import.meta.env.VITE_INSTAGRAM_APP_ID as string);
@@ -85,7 +116,6 @@ export function initiateInstagramOAuthLogin(customAppId?: string) {
   }
 
   // Clear stale token & accountId so the new login session starts clean.
-  // This prevents a @lana_carousels token being used with a @lana.carousel account ID.
   clearInstagramCredentials();
 
   const redirectUri = `${window.location.origin}/`;
@@ -94,6 +124,9 @@ export function initiateInstagramOAuthLogin(customAppId?: string) {
     'instagram_content_publish',
     'pages_show_list',
     'pages_read_engagement',
+    'pages_manage_posts',
+    'business_management',
+    'public_profile',
   ].join(',');
 
   const oauthUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scopes)}`;
@@ -115,14 +148,17 @@ export async function parseInstagramOAuthCallback(): Promise<{
   }
 
   const params = new URLSearchParams(hash.replace('#', '?'));
-  const accessToken = params.get('access_token');
+  const rawAccessToken = params.get('access_token');
 
-  if (!accessToken) {
+  if (!rawAccessToken) {
     return { success: false, error: 'No access token found in OAuth redirect callback.' };
   }
 
   // Clear hash from URL cleanly without page reload
   window.history.replaceState(null, '', window.location.pathname + window.location.search);
+
+  // Exchange for 60-day long-lived token
+  const accessToken = await exchangeForLongLivedToken(rawAccessToken);
 
   // Auto-detect Instagram Account ID & Username from token
   const linkedInfo = await fetchLinkedInstagramAccountInfo(accessToken);
@@ -142,85 +178,151 @@ export async function parseInstagramOAuthCallback(): Promise<{
     accessToken,
     accountId: linkedInfo.accountId,
     username: linkedInfo.username,
+    error: linkedInfo.error,
   };
 }
 
 // ─── Auto-Detect Linked IG Business Account ────────────────────────────────────
 
+export interface DetectedInstagramAccount {
+  id: string;
+  username: string;
+  name?: string;
+  profilePictureUrl?: string;
+  pageId?: string;
+  pageName?: string;
+  pageToken?: string;
+}
+
 export async function fetchLinkedInstagramAccountInfo(accessToken: string): Promise<{
   accountId?: string;
   username?: string;
+  accounts?: DetectedInstagramAccount[];
   error?: string;
 }> {
   try {
-    // Attempt 1: Fetch via Facebook Pages accounts list
+    const detectedAccounts: DetectedInstagramAccount[] = [];
+
+    // Attempt 1: Fetch via Facebook Pages accounts list (/me/accounts)
     const res1 = await fetch(
-      `https://graph.facebook.com/v19.0/me/accounts?fields=access_token,name,instagram_business_account{id,name,username},connected_instagram_account{id,name,username}&access_token=${accessToken}`
+      `https://graph.facebook.com/v19.0/me/accounts?fields=id,name,access_token,category,instagram_business_account{id,name,username,profile_picture_url},connected_instagram_account{id,name,username,profile_picture_url}&access_token=${accessToken}`
     );
     const data1 = await res1.json();
 
-    if (res1.ok && data1.data) {
+    if (res1.ok && Array.isArray(data1.data)) {
       for (const page of data1.data) {
         const igAcc = page.instagram_business_account || page.connected_instagram_account;
-        if (igAcc) {
-          return {
-            accountId: igAcc.id,
-            username: igAcc.username || igAcc.name,
-          };
-        }
-        if (page.access_token && page.id) {
+        if (igAcc?.id) {
+          detectedAccounts.push({
+            id: igAcc.id,
+            username: igAcc.username || igAcc.name || 'Instagram Account',
+            name: igAcc.name,
+            profilePictureUrl: igAcc.profile_picture_url,
+            pageId: page.id,
+            pageName: page.name,
+            pageToken: page.access_token,
+          });
+        } else if (page.id) {
+          // If not embedded in first query, try querying the specific page node
+          const tokenToUse = page.access_token || accessToken;
           try {
             const pageIgRes = await fetch(
-              `https://graph.facebook.com/v19.0/${page.id}?fields=instagram_business_account{id,name,username},connected_instagram_account{id,name,username}&access_token=${page.access_token}`
+              `https://graph.facebook.com/v19.0/${page.id}?fields=id,name,instagram_business_account{id,name,username,profile_picture_url},connected_instagram_account{id,name,username,profile_picture_url}&access_token=${tokenToUse}`
             );
             const pageIgData = await pageIgRes.json();
             const subIg = pageIgData.instagram_business_account || pageIgData.connected_instagram_account;
-            if (subIg) {
-              return {
-                accountId: subIg.id,
-                username: subIg.username || subIg.name,
-              };
+            if (subIg?.id) {
+              detectedAccounts.push({
+                id: subIg.id,
+                username: subIg.username || subIg.name || 'Instagram Account',
+                name: subIg.name,
+                profilePictureUrl: subIg.profile_picture_url,
+                pageId: page.id,
+                pageName: page.name,
+                pageToken: page.access_token,
+              });
             }
           } catch {
-            // continue loop
+            // continue
           }
         }
       }
     }
 
     // Attempt 2: Direct query on /me endpoint
-    const res2 = await fetch(
-      `https://graph.facebook.com/v19.0/me?fields=id,name,username,instagram_business_account{id,name,username},connected_instagram_account{id,name,username}&access_token=${accessToken}`
-    );
-    const data2 = await res2.json();
+    if (detectedAccounts.length === 0) {
+      try {
+        const res2 = await fetch(
+          `https://graph.facebook.com/v19.0/me?fields=id,name,username,instagram_business_account{id,name,username,profile_picture_url},connected_instagram_account{id,name,username,profile_picture_url}&access_token=${accessToken}`
+        );
+        const data2 = await res2.json();
 
-    const directIg = data2?.instagram_business_account || data2?.connected_instagram_account;
-    if (res2.ok && directIg) {
+        const directIg = data2?.instagram_business_account || data2?.connected_instagram_account;
+        if (res2.ok && directIg?.id) {
+          detectedAccounts.push({
+            id: directIg.id,
+            username: directIg.username || directIg.name || 'Instagram Account',
+            name: directIg.name,
+            profilePictureUrl: directIg.profile_picture_url,
+          });
+        }
+      } catch {
+        // continue
+      }
+    }
+
+    // Attempt 3: Query Business Manager accounts (/me/businesses)
+    if (detectedAccounts.length === 0) {
+      try {
+        const bizRes = await fetch(
+          `https://graph.facebook.com/v19.0/me/businesses?fields=id,name,instagram_business_accounts{id,name,username,profile_picture_url}&access_token=${accessToken}`
+        );
+        const bizData = await bizRes.json();
+        if (bizRes.ok && Array.isArray(bizData.data)) {
+          for (const biz of bizData.data) {
+            const igList = biz.instagram_business_accounts?.data || [];
+            for (const ig of igList) {
+              if (ig.id) {
+                detectedAccounts.push({
+                  id: ig.id,
+                  username: ig.username || ig.name || 'Instagram Account',
+                  name: ig.name,
+                  profilePictureUrl: ig.profile_picture_url,
+                });
+              }
+            }
+          }
+        }
+      } catch {
+        // continue
+      }
+    }
+
+    // If accounts were found, return primary
+    if (detectedAccounts.length > 0) {
+      const primary = detectedAccounts[0];
       return {
-        accountId: directIg.id,
-        username: directIg.username || directIg.name,
+        accountId: primary.id,
+        username: primary.username,
+        accounts: detectedAccounts,
       };
     }
 
-    // Attempt 3: Fallback to Facebook Page node if page linked
-    if (data1?.data?.[0]?.id) {
-      return {
-        accountId: data1.data[0].id,
-        username: data1.data[0].name || 'Instagram Business Account',
-      };
+    // Diagnostic message when no accounts detected
+    const pagesCount = data1?.data?.length || 0;
+    let message = 'No Instagram Business Account linked to your Facebook profile was found.';
+    if (pagesCount === 0) {
+      message = 'Your Meta login does not have any connected Facebook Pages. To post to Instagram, your Instagram account must be a Professional/Business account connected to a Facebook Page.';
+    } else {
+      message = `Found ${pagesCount} Facebook Page(s), but none have an Instagram Business account connected. Please connect your Instagram profile to one of your Facebook Pages in Meta Business Suite or Facebook Page Settings > Linked Accounts.`;
     }
 
-    // Attempt 4: Direct IG user node lookup if standalone token
-    if (res2.ok && data2?.id) {
-      return {
-        accountId: data2.id,
-        username: data2.username || data2.name,
-      };
-    }
-
-    return { error: 'No Instagram Business Account linked to your Facebook Page was found. Ensure your IG profile is a Business/Creator account linked to a Facebook Page.' };
+    return {
+      error: message,
+      accounts: [],
+    };
   } catch (err: unknown) {
-    return { error: err instanceof Error ? err.message : 'Network error.' };
+    return { error: err instanceof Error ? err.message : 'Network error during Instagram account detection.' };
   }
 }
 
@@ -241,7 +343,7 @@ export async function verifyInstagramCredentials(
   try {
     const endpoint = id
       ? `https://graph.facebook.com/v19.0/${id}?fields=id,name,username,profile_picture_url&access_token=${token}`
-      : `https://graph.facebook.com/v19.0/me/accounts?fields=name,instagram_business_account{id,name,username}&access_token=${token}`;
+      : `https://graph.facebook.com/v19.0/me/accounts?fields=name,instagram_business_account{id,name,username,profile_picture_url}&access_token=${token}`;
 
     const res = await fetch(endpoint);
     const data = await res.json();
@@ -249,7 +351,7 @@ export async function verifyInstagramCredentials(
     if (!res.ok || data.error) {
       return {
         success: false,
-        error: data.error?.message || 'Meta API verification failed.',
+        error: data.error?.message || 'Meta API verification failed. Token may be expired or lack permissions.',
       };
     }
 
@@ -269,7 +371,7 @@ export async function verifyInstagramCredentials(
   } catch (err: unknown) {
     return {
       success: false,
-      error: err instanceof Error ? err.message : 'Verification failed.',
+      error: err instanceof Error ? err.message : 'Verification failed due to network error.',
     };
   }
 }
@@ -345,7 +447,7 @@ export async function publishCarouselToInstagram(
   const token = customToken || creds.accessToken;
   let id = customAccountId || creds.accountId;
 
-  // Auto-detect account ID if missing
+  // Auto-detect account ID if missing but token is available
   if (!id && token) {
     const autoInfo = await fetchLinkedInstagramAccountInfo(token);
     if (autoInfo.accountId) {
@@ -357,14 +459,14 @@ export async function publishCarouselToInstagram(
   if (!token) {
     return {
       success: false,
-      error: 'Instagram access token is missing or expired. Click "Reconnect Instagram Account" to refresh connection in 1 click.',
+      error: 'Instagram access token is missing or expired. Click "Connect Instagram Account" in Settings or below to authenticate with Meta.',
     };
   }
 
   if (!id) {
     return {
       success: false,
-      error: 'No Instagram Business Account was detected on your Meta login. Please ensure your Instagram profile is a Professional/Business account connected to a Facebook page.',
+      error: 'No Instagram Business Account was detected on your Meta login. Please ensure your Instagram profile is a Professional/Business account connected to a Facebook page, or enter your Instagram Account ID manually in Settings.',
     };
   }
 
@@ -408,8 +510,13 @@ export async function publishCarouselToInstagram(
       itemContainerIds.push(itemData.id);
     }
 
-    // Step 2: Create parent carousel container
-    const fullCaption = `${carouselTitle}\n\n${captionText}`.trim();
+    // Step 2: Format clean caption text without duplicating title
+    let fullCaption = captionText.trim();
+    if (carouselTitle && !fullCaption.includes(carouselTitle.trim())) {
+      fullCaption = `${carouselTitle.trim()}\n\n${fullCaption}`;
+    }
+
+    // Step 3: Create parent carousel container
     const carouselBody = new URLSearchParams({
       media_type: 'CAROUSEL',
       children: JSON.stringify(itemContainerIds),
@@ -425,12 +532,12 @@ export async function publishCarouselToInstagram(
     const carouselData = await carouselRes.json();
 
     if (!carouselRes.ok || carouselData.error) {
-      throw new Error(carouselData.error?.message || 'Failed to create parent carousel container.');
+      throw new Error(carouselData.error?.message || 'Failed to create parent carousel container on Meta API.');
     }
 
     const creationId = carouselData.id;
 
-    // Step 3: Publish container to live Instagram Feed
+    // Step 4: Publish container to live Instagram Feed
     const publishBody = new URLSearchParams({
       creation_id: creationId,
       access_token: token,
@@ -455,7 +562,7 @@ export async function publishCarouselToInstagram(
   } catch (err: unknown) {
     return {
       success: false,
-      error: err instanceof Error ? err.message : 'Publishing failed.',
+      error: err instanceof Error ? err.message : 'Publishing to Instagram failed.',
     };
   }
 }
