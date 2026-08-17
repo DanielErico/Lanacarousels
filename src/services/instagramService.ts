@@ -514,10 +514,10 @@ export async function publishCarouselToInstagram(
       fullCaption = `${carouselTitle.trim()}\n\n${fullCaption}`;
     }
 
-    // Step 3: Create parent carousel container
+    // Step 3: Create parent carousel container (Meta Graph API accepts comma-delimited or JSON string)
     const carouselBody = new URLSearchParams({
       media_type: 'CAROUSEL',
-      children: JSON.stringify(itemContainerIds),
+      children: itemContainerIds.join(','),
       caption: fullCaption,
       access_token: token,
     });
@@ -530,10 +530,32 @@ export async function publishCarouselToInstagram(
     const carouselData = await carouselRes.json();
 
     if (!carouselRes.ok || carouselData.error) {
-      throw new Error(carouselData.error?.message || 'Failed to create parent carousel container on Meta API.');
+      // Fallback to JSON.stringify format if comma-delimited was rejected
+      const retryBody = new URLSearchParams({
+        media_type: 'CAROUSEL',
+        children: JSON.stringify(itemContainerIds),
+        caption: fullCaption,
+        access_token: token,
+      });
+
+      const retryRes = await fetch(`https://graph.facebook.com/v19.0/${id}/media`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: retryBody,
+      });
+      const retryData = await retryRes.json();
+
+      if (!retryRes.ok || retryData.error) {
+        throw new Error(retryData.error?.message || carouselData.error?.message || 'Failed to create parent carousel container on Meta API.');
+      }
+
+      carouselData.id = retryData.id;
     }
 
     const creationId = carouselData.id;
+
+    // Small delay to ensure Meta finishes container packaging
+    await new Promise(r => setTimeout(r, 1500));
 
     // Step 4: Publish container to live Instagram Feed
     const publishBody = new URLSearchParams({

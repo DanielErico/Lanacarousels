@@ -49,6 +49,7 @@ import {
   NEMOTRON_MODELS,
 } from '../services/aiService';
 import { exportSlidePng, exportCarouselZip } from '../services/exportService';
+import html2canvas from 'html2canvas';
 import { publishCarouselToInstagram, schedulePostWithQStash, getStoredInstagramCredentials, initiateInstagramOAuthLogin, isInstagramConnected } from '../services/instagramService';
 
 interface CarouselStudioProps {
@@ -175,15 +176,27 @@ export const CarouselStudio: React.FC<CarouselStudioProps> = ({
       const slideUrls: string[] = [];
       const hiddenContainer = hiddenSlidesRef.current;
 
-      if (hiddenContainer && (window as any).html2canvas) {
+      if (hiddenContainer) {
         for (let i = 0; i < currentCarousel.slides.length; i++) {
           const slideEl = hiddenContainer.children[i] as HTMLElement;
           if (slideEl) {
-            const canvas = await (window as any).html2canvas(slideEl, { scale: 2, useCORS: true });
+            const canvas = await html2canvas(slideEl, {
+              scale: 2,
+              useCORS: true,
+              allowTaint: true,
+              backgroundColor: null,
+              logging: false,
+            });
             const dataUrl = canvas.toDataURL('image/png');
             slideUrls.push(dataUrl);
           }
         }
+      }
+
+      if (slideUrls.length < 2) {
+        setPublishErrorMessage('An Instagram carousel must contain at least 2 slides to publish.');
+        setIsPublishingNow(false);
+        return;
       }
 
       const hashtags = (currentCarousel.caption.hashtags || [])
@@ -194,7 +207,7 @@ export const CarouselStudio: React.FC<CarouselStudioProps> = ({
 
       // Pass carouselId so Supabase Storage uploads are properly namespaced
       const res = await publishCarouselToInstagram(
-        slideUrls.length > 0 ? slideUrls : ['https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1080&h=1350&fit=crop'],
+        slideUrls,
         currentCarousel.title,
         captionBody,
         undefined,
