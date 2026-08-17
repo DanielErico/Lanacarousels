@@ -127,7 +127,7 @@ export function initiateInstagramOAuthLogin(customAppId?: string) {
     'public_profile',
   ].join(',');
 
-  const oauthUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scopes)}`;
+  const oauthUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scopes)}&auth_type=rerequest`;
 
   // Redirect user to official Facebook / Instagram OAuth page
   window.location.href = oauthUrl;
